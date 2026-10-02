@@ -781,10 +781,10 @@
         <button class="qa-btn" onclick="openModal('modal-tambah-pelanggan')">
           <div class="qa-icon">👤</div>Tambah Pelanggan
         </button>
-        <button class="qa-btn" onclick="showToast('Fitur segera hadir di Phase 5')">
+        <button class="qa-btn" onclick="openModal('modal-tambah-keuangan')">
           <div class="qa-icon">💰</div>Catat Pengeluaran
         </button>
-        <button class="qa-btn" onclick="showToast('Fitur segera hadir di Phase 6')">
+        <button class="qa-btn" onclick="openModal('modal-tambah-servis');populateServisMotor()">
           <div class="qa-icon">🔧</div>Catat Servis
         </button>
         <button class="qa-btn" onclick="openModal('modal-tambah-pelanggan')">
@@ -868,48 +868,101 @@
       <button class="fab" onclick="openModal('modal-tambah-pelanggan')">＋</button>
     </div>
 
-    <!-- ===================== KEUANGAN (coming soon) ===================== -->
+    <!-- ===================== KEUANGAN ===================== -->
     <div id="page-keuangan" class="page">
       <div class="page-header">
         <div class="page-title">Keuangan</div>
-        <div class="page-sub">Pemasukan & pengeluaran</div>
+        <div class="page-sub">Pemasukan & pengeluaran usaha</div>
       </div>
-      <div class="section">
-        <div class="empty-state">
-          <div class="empty-icon">💰</div>
-          <div class="empty-title">Modul Keuangan</div>
-          <div class="empty-sub">Fitur pencatatan keuangan lengkap akan hadir di Phase 5.<br>Termasuk pemasukan, pengeluaran, dan laporan laba rugi.</div>
+      <!-- Ringkasan strip -->
+      <div class="finance-strip" id="fin-strip">
+        <div class="fin-item">
+          <div class="fin-label">Pemasukan</div>
+          <div class="fin-val" id="fin-total-masuk">-</div>
+        </div>
+        <div class="fin-divider"></div>
+        <div class="fin-item">
+          <div class="fin-label">Pengeluaran</div>
+          <div class="fin-val" id="fin-total-keluar">-</div>
+        </div>
+        <div class="fin-divider"></div>
+        <div class="fin-item">
+          <div class="fin-label">Laba</div>
+          <div class="fin-val" id="fin-total-laba">-</div>
         </div>
       </div>
+      <!-- Filter periode -->
+      <div class="filter-chips">
+        <button class="chip active" onclick="filterFinPeriode('bulan',this)">Bulan Ini</button>
+        <button class="chip" onclick="filterFinPeriode('minggu',this)">Minggu Ini</button>
+        <button class="chip" onclick="filterFinPeriode('hari',this)">Hari Ini</button>
+        <button class="chip" onclick="filterFinPeriode('semua',this)">Semua</button>
+      </div>
+      <!-- Filter jenis -->
+      <div class="filter-chips" style="padding-top:0">
+        <button class="chip active" onclick="filterFinJenis('semua',this)" id="fin-chip-semua">Semua</button>
+        <button class="chip" onclick="filterFinJenis('PEMASUKAN',this)">Pemasukan</button>
+        <button class="chip" onclick="filterFinJenis('PENGELUARAN',this)">Pengeluaran</button>
+      </div>
+      <div class="section">
+        <div id="fin-list"></div>
+      </div>
+      <button class="fab" onclick="openModal('modal-tambah-keuangan')">＋</button>
     </div>
 
-    <!-- ===================== SERVIS (coming soon) ===================== -->
+    <!-- ===================== SERVIS ===================== -->
     <div id="page-servis" class="page">
       <div class="page-header">
         <div class="page-title">Servis</div>
         <div class="page-sub">Riwayat perawatan armada</div>
       </div>
-      <div class="section">
-        <div class="empty-state">
-          <div class="empty-icon">🔧</div>
-          <div class="empty-title">Modul Servis</div>
-          <div class="empty-sub">Pencatatan servis dan riwayat perawatan tiap motor akan hadir di Phase 6.</div>
+      <div class="search-bar">
+        <div class="search-input">
+          <span class="search-icon">🔍</span>
+          <input type="text" placeholder="Cari motor atau jenis servis..." oninput="filterServis(this.value)">
         </div>
       </div>
+      <div class="section">
+        <div id="servis-list"></div>
+      </div>
+      <button class="fab" onclick="openModal('modal-tambah-servis')">＋</button>
     </div>
 
-    <!-- ===================== LAPORAN (coming soon) ===================== -->
+    <!-- ===================== LAPORAN ===================== -->
     <div id="page-laporan" class="page">
       <div class="page-header">
         <div class="page-title">Laporan</div>
         <div class="page-sub">Analitik bisnis rental</div>
       </div>
+      <!-- Filter periode -->
+      <div class="filter-chips">
+        <button class="chip active" onclick="filterLaporan('bulan',this)">Bulan Ini</button>
+        <button class="chip" onclick="filterLaporan('minggu',this)">Minggu Ini</button>
+        <button class="chip" onclick="filterLaporan('hari',this)">Hari Ini</button>
+      </div>
+      <!-- Ringkasan -->
+      <div class="stat-grid" id="lap-stat-grid">
+        <div class="stat-card accent"><div class="stat-label">Total Rental</div><div class="stat-value" id="lap-total-rental">-</div></div>
+        <div class="stat-card success"><div class="stat-label">Pemasukan</div><div class="stat-value" id="lap-pemasukan" style="font-size:16px">-</div></div>
+        <div class="stat-card warning"><div class="stat-label">Pengeluaran</div><div class="stat-value" id="lap-pengeluaran" style="font-size:16px">-</div></div>
+        <div class="stat-card orange"><div class="stat-label">Laba</div><div class="stat-value" id="lap-laba" style="font-size:16px">-</div></div>
+      </div>
+      <!-- Grafik pemasukan sederhana -->
       <div class="section">
-        <div class="empty-state">
-          <div class="empty-icon">📊</div>
-          <div class="empty-title">Modul Laporan</div>
-          <div class="empty-sub">Laporan pendapatan, servis, dan performa armada akan hadir di Phase 7.</div>
+        <div class="section-header"><div class="section-title">Tren Pemasukan</div></div>
+        <div class="card" style="padding:16px 8px">
+          <canvas id="chart-tren" height="160"></canvas>
         </div>
+      </div>
+      <!-- Top motor -->
+      <div class="section">
+        <div class="section-header"><div class="section-title">Motor Paling Sering Disewa</div></div>
+        <div id="lap-top-motor"></div>
+      </div>
+      <!-- Top pelanggan -->
+      <div class="section">
+        <div class="section-header"><div class="section-title">Pelanggan Paling Aktif</div></div>
+        <div id="lap-top-pelanggan"></div>
       </div>
     </div>
 
@@ -1300,6 +1353,106 @@
   </div>
 </div>
 
+<!-- ============== MODAL: TAMBAH KEUANGAN ============== -->
+<div class="modal-backdrop" id="modal-tambah-keuangan" onclick="closeModalOnBackdrop(event,'modal-tambah-keuangan')">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-header">
+      <div class="modal-title">💰 Catat Keuangan</div>
+      <button class="modal-close" onclick="closeModal('modal-tambah-keuangan')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label">Jenis *</label>
+        <select class="form-control" id="fin-jenis" onchange="updateKategoriOptions()">
+          <option value="PENGELUARAN">Pengeluaran</option>
+          <option value="PEMASUKAN">Pemasukan</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Kategori *</label>
+        <select class="form-control" id="fin-kategori"></select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Tanggal *</label>
+        <input class="form-control" id="fin-tgl" type="date">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Nominal (Rp) *</label>
+        <input class="form-control" id="fin-nominal" type="number" placeholder="0">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Keterangan</label>
+        <input class="form-control" id="fin-ket" placeholder="Detail transaksi...">
+      </div>
+      <div class="form-actions">
+        <button class="btn btn-secondary" onclick="closeModal('modal-tambah-keuangan')">Batal</button>
+        <button class="btn btn-primary" onclick="simpanKeuangan()">Simpan</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============== MODAL: TAMBAH SERVIS ============== -->
+<div class="modal-backdrop" id="modal-tambah-servis" onclick="closeModalOnBackdrop(event,'modal-tambah-servis')">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-header">
+      <div class="modal-title">🔧 Catat Servis</div>
+      <button class="modal-close" onclick="closeModal('modal-tambah-servis')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label">Motor *</label>
+        <select class="form-control" id="svc-motor"></select>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Tanggal *</label>
+          <input class="form-control" id="svc-tgl" type="date">
+        </div>
+        <div class="form-group">
+          <label class="form-label">KM Saat Ini</label>
+          <input class="form-control" id="svc-km" type="number" placeholder="0">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Jenis Servis *</label>
+        <select class="form-control" id="svc-jenis">
+          <option>Ganti Oli</option>
+          <option>Servis Rutin</option>
+          <option>Ganti Ban</option>
+          <option>Ganti Aki</option>
+          <option>Servis Rem</option>
+          <option>Tune Up</option>
+          <option>Ganti Sparepart</option>
+          <option>Servis Besar</option>
+          <option>Lainnya</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Biaya (Rp)</label>
+        <input class="form-control" id="svc-biaya" type="number" placeholder="0">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Status</label>
+        <select class="form-control" id="svc-status">
+          <option value="SELESAI">Selesai — motor kembali tersedia</option>
+          <option value="PROSES">Masih dalam servis</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Catatan</label>
+        <input class="form-control" id="svc-catatan" placeholder="Detail pekerjaan...">
+      </div>
+      <div class="form-actions">
+        <button class="btn btn-secondary" onclick="closeModal('modal-tambah-servis')">Batal</button>
+        <button class="btn btn-primary" onclick="simpanServis()">Simpan Servis</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script>
 // ====================== DATA DUMMY ======================
 const DB = {
@@ -1387,6 +1540,9 @@ function showPage(page) {
   if (page === 'sewa') renderSewa();
   if (page === 'armada') renderMotor();
   if (page === 'pelanggan') renderPelanggan();
+  if (page === 'keuangan') { updateKategoriOptions(); document.getElementById('fin-tgl').value = new Date().toISOString().split('T')[0]; renderKeuangan(); }
+  if (page === 'servis') { populateServisMotor(); renderServis(); }
+  if (page === 'laporan') renderLaporan();
   // scroll to top
   document.getElementById('page-' + page).scrollTop = 0;
 }
@@ -2146,6 +2302,331 @@ function updateStats() {
   document.getElementById('st-servis').textContent = servis;
 }
 
+// ====================== KEUANGAN ======================
+DB.keuangan = [];
+DB.servis = [];
+let finPeriode = 'bulan', finJenis = 'semua';
+
+const KATEGORI_PENGELUARAN = ['Servis','Sparepart','BBM','Pajak','Cuci Motor','Gaji','Operasional','Lainnya'];
+const KATEGORI_PEMASUKAN   = ['DP Rental','Pelunasan Rental','Perpanjangan Sewa','Denda Keterlambatan','Pendapatan Lain'];
+
+function updateKategoriOptions() {
+  const jenis = document.getElementById('fin-jenis').value;
+  const opts  = jenis === 'PENGELUARAN' ? KATEGORI_PENGELUARAN : KATEGORI_PEMASUKAN;
+  document.getElementById('fin-kategori').innerHTML = opts.map(o => `<option>${o}</option>`).join('');
+}
+
+function getPeriodRange(periode) {
+  const now   = new Date();
+  const today = now.toISOString().split('T')[0];
+  if (periode === 'hari') return { dari: today, sampai: today };
+  if (periode === 'minggu') {
+    const d = new Date(now); d.setDate(d.getDate() - 6);
+    return { dari: d.toISOString().split('T')[0], sampai: today };
+  }
+  if (periode === 'bulan') {
+    return { dari: `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-01`, sampai: today };
+  }
+  return { dari: '', sampai: '' };
+}
+
+function filterFinPeriode(p, btn) {
+  finPeriode = p;
+  document.querySelectorAll('#page-keuangan .filter-chips:first-of-type .chip').forEach(c => c.classList.remove('active'));
+  btn.classList.add('active');
+  renderKeuangan();
+}
+function filterFinJenis(j, btn) {
+  finJenis = j;
+  document.querySelectorAll('#page-keuangan .filter-chips:last-of-type .chip').forEach(c => c.classList.remove('active'));
+  btn.classList.add('active');
+  renderKeuangan();
+}
+
+function renderKeuangan() {
+  const { dari, sampai } = getPeriodRange(finPeriode);
+  let data = [...DB.keuangan].reverse();
+  if (dari) data = data.filter(f => f.tanggal >= dari && f.tanggal <= sampai);
+  if (finJenis !== 'semua') data = data.filter(f => f.jenis === finJenis);
+
+  const allPeriod = dari ? DB.keuangan.filter(f => f.tanggal >= dari && f.tanggal <= sampai) : DB.keuangan;
+  const masuk  = allPeriod.filter(f => f.jenis === 'PEMASUKAN').reduce((a, f) => a + Number(f.nominal||0), 0);
+  const keluar = allPeriod.filter(f => f.jenis === 'PENGELUARAN').reduce((a, f) => a + Number(f.nominal||0), 0);
+  document.getElementById('fin-total-masuk').textContent  = rupiahSingkat(masuk);
+  document.getElementById('fin-total-keluar').textContent = rupiahSingkat(keluar);
+  document.getElementById('fin-total-laba').textContent   = rupiahSingkat(masuk - keluar);
+
+  const el = document.getElementById('fin-list');
+  if (data.length === 0) {
+    el.innerHTML = `<div class="empty-state"><div class="empty-icon">💰</div><div class="empty-title">Belum ada transaksi</div><div class="empty-sub">Tambah pemasukan atau pengeluaran dengan tombol +</div></div>`;
+    return;
+  }
+  el.innerHTML = data.map(f => `
+    <div class="rental-card" style="border-left:3px solid ${f.jenis==='PEMASUKAN'?'var(--success)':'var(--danger)'}">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start">
+        <div>
+          <div style="font-size:14px;font-weight:700">${f.kategori}</div>
+          <div style="font-size:12px;color:var(--text-muted)">${f.keterangan||'-'} · ${formatDate(f.tanggal)}</div>
+        </div>
+        <div style="font-size:15px;font-weight:800;color:${f.jenis==='PEMASUKAN'?'var(--success)':'var(--danger)'}">
+          ${f.jenis==='PEMASUKAN'?'+':'-'}${rupiah(f.nominal)}
+        </div>
+      </div>
+      <div style="margin-top:6px">${badgeHtml(f.jenis==='PEMASUKAN'?'TERSEDIA':'RUSAK').replace('TERSEDIA','PEMASUKAN').replace('RUSAK','PENGELUARAN')}</div>
+    </div>`).join('');
+}
+
+function rupiahSingkat(n) {
+  if (n >= 1000000) return 'Rp' + (n/1000000).toFixed(1).replace('.0','') + 'jt';
+  if (n >= 1000)    return 'Rp' + (n/1000).toFixed(0) + 'rb';
+  return rupiah(n);
+}
+
+async function simpanKeuangan() {
+  const jenis   = document.getElementById('fin-jenis').value;
+  const kat     = document.getElementById('fin-kategori').value;
+  const tgl     = document.getElementById('fin-tgl').value;
+  const nominal = parseInt(document.getElementById('fin-nominal').value) || 0;
+  const ket     = document.getElementById('fin-ket').value.trim();
+
+  if (!tgl || !nominal) { showToast('⚠️ Tanggal dan nominal wajib diisi'); return; }
+  if (nominal <= 0) { showToast('⚠️ Nominal harus lebih dari 0'); return; }
+
+  try {
+    let fin;
+    if (isOnline()) {
+      const res = await apiPost('add_finance', { JENIS: jenis, KATEGORI: kat, TANGGAL: tgl, NOMINAL: nominal, KETERANGAN: ket });
+      fin = { id: res.ID, jenis: res.JENIS, kategori: res.KATEGORI, tanggal: res.TANGGAL, nominal: Number(res.NOMINAL), keterangan: res.KETERANGAN };
+    } else {
+      fin = { id: genId('F', DB.keuangan), jenis, kategori: kat, tanggal: tgl, nominal, keterangan: ket };
+    }
+    DB.keuangan.push(fin);
+    DB.aktivitas.unshift({ type: jenis==='PEMASUKAN'?'green':'orange', teks: `${jenis==='PEMASUKAN'?'Pemasukan':'Pengeluaran'}: ${kat} — ${rupiah(nominal)}`, waktu: 'Baru saja' });
+    ['fin-nominal','fin-ket'].forEach(i => document.getElementById(i).value = '');
+    closeModal('modal-tambah-keuangan');
+    showToast('✅ Transaksi berhasil dicatat');
+    renderKeuangan();
+  } catch(e) { showToast('❌ ' + e.message); }
+}
+
+// ====================== SERVIS ======================
+function populateServisMotor() {
+  const sel = document.getElementById('svc-motor');
+  sel.innerHTML = '<option value="">— Pilih Motor —</option>' +
+    DB.motors.map(m => `<option value="${m.id}">${m.merek} ${m.tipe} · ${m.plat} (${m.status})</option>`).join('');
+  document.getElementById('svc-tgl').value = new Date().toISOString().split('T')[0];
+  document.getElementById('svc-biaya').value = '';
+  document.getElementById('svc-km').value = '';
+  document.getElementById('svc-catatan').value = '';
+}
+
+function filterServis(q) { renderServis(q); }
+
+function renderServis(q) {
+  let data = [...DB.servis].reverse();
+  if (q) data = data.filter(s => {
+    const m = DB.motors.find(x => x.id === s.motorId);
+    return (m?.merek+m?.tipe+m?.plat+s.jenisServis).toLowerCase().includes(q.toLowerCase());
+  });
+  const el = document.getElementById('servis-list');
+  if (data.length === 0) {
+    el.innerHTML = `<div class="empty-state"><div class="empty-icon">🔧</div><div class="empty-title">Belum ada catatan servis</div><div class="empty-sub">Catat servis pertama dengan tombol +</div></div>`;
+    return;
+  }
+  el.innerHTML = data.map(s => {
+    const m = DB.motors.find(x => x.id === s.motorId);
+    return `<div class="rental-card">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start">
+        <div>
+          <div style="font-size:14px;font-weight:700">${s.jenisServis}</div>
+          <div style="font-size:12px;color:var(--text-muted)">${m?.merek} ${m?.tipe} · ${m?.plat}</div>
+          <div style="font-size:12px;color:var(--text-muted);margin-top:2px">📅 ${formatDate(s.tanggal)} · ${s.km>0?s.km.toLocaleString('id-ID')+' km':''}</div>
+        </div>
+        <div style="text-align:right">
+          <div style="font-size:14px;font-weight:800;color:var(--danger)">${rupiah(s.biaya)}</div>
+          <div style="margin-top:4px">${badgeHtml(s.status==='PROSES'?'DISEWA':'TERSEDIA').replace('DISEWA','PROSES').replace('TERSEDIA','SELESAI')}</div>
+        </div>
+      </div>
+      ${s.catatan?`<div style="font-size:12px;color:var(--text-muted);margin-top:6px;padding-top:6px;border-top:1px solid var(--border)">${s.catatan}</div>`:''}
+    </div>`;
+  }).join('');
+}
+
+async function simpanServis() {
+  const motorId = document.getElementById('svc-motor').value;
+  const tgl     = document.getElementById('svc-tgl').value;
+  const km      = parseInt(document.getElementById('svc-km').value) || 0;
+  const jenis   = document.getElementById('svc-jenis').value;
+  const biaya   = parseInt(document.getElementById('svc-biaya').value) || 0;
+  const status  = document.getElementById('svc-status').value;
+  const catatan = document.getElementById('svc-catatan').value.trim();
+
+  if (!motorId || !tgl || !jenis) { showToast('⚠️ Motor, tanggal, dan jenis servis wajib diisi'); return; }
+
+  const m = DB.motors.find(x => x.id === motorId);
+  try {
+    let svc;
+    if (isOnline()) {
+      const res = await apiPost('add_service', { MOTOR_ID: motorId, TANGGAL: tgl, KILOMETER: km, JENIS_SERVIS: jenis, BIAYA: biaya, STATUS: status, CATATAN: catatan });
+      svc = { id: res.ID, motorId: res.MOTOR_ID, tanggal: res.TANGGAL, km: Number(res.KILOMETER), jenisServis: res.JENIS_SERVIS, biaya: Number(res.BIAYA), status: res.STATUS, catatan: res.CATATAN };
+    } else {
+      svc = { id: genId('SVC', DB.servis), motorId, tanggal: tgl, km, jenisServis: jenis, biaya, status, catatan };
+    }
+    DB.servis.push(svc);
+    // Update status motor lokal
+    if (status === 'PROSES') m.status = 'SERVIS';
+    else if (m.status === 'SERVIS') m.status = 'TERSEDIA';
+    if (km > 0) m.km = km;
+    // Catat ke keuangan lokal juga
+    if (biaya > 0) DB.keuangan.push({ id: genId('F',DB.keuangan), jenis:'PENGELUARAN', kategori:'Servis', tanggal:tgl, nominal:biaya, keterangan:`Servis ${m?.merek} ${m?.tipe} - ${jenis}` });
+    DB.aktivitas.unshift({ type: 'orange', teks: `Servis ${m?.merek} ${m?.tipe} (${m?.plat}) — ${jenis}`, waktu: 'Baru saja' });
+    closeModal('modal-tambah-servis');
+    showToast('✅ Servis berhasil dicatat');
+    renderServis(); updateStats();
+    if (currentPage === 'keuangan') renderKeuangan();
+    if (currentPage === 'armada') renderMotor();
+  } catch(e) { showToast('❌ ' + e.message); }
+}
+
+// ====================== LAPORAN ======================
+let lapPeriode = 'bulan';
+
+function filterLaporan(p, btn) {
+  lapPeriode = p;
+  document.querySelectorAll('#page-laporan .filter-chips .chip').forEach(c => c.classList.remove('active'));
+  btn.classList.add('active');
+  renderLaporan();
+}
+
+function renderLaporan() {
+  const { dari, sampai } = getPeriodRange(lapPeriode);
+
+  // Sewa di periode ini
+  const sewas = DB.sewa.filter(s => !dari || (s.mulai >= dari && s.mulai <= sampai));
+  const fins  = DB.keuangan.filter(f => !dari || (f.tanggal >= dari && f.tanggal <= sampai));
+
+  const masuk  = fins.filter(f => f.jenis === 'PEMASUKAN').reduce((a, f) => a + Number(f.nominal||0), 0);
+  const keluar = fins.filter(f => f.jenis === 'PENGELUARAN').reduce((a, f) => a + Number(f.nominal||0), 0);
+
+  document.getElementById('lap-total-rental').textContent = sewas.length;
+  document.getElementById('lap-pemasukan').textContent    = rupiahSingkat(masuk);
+  document.getElementById('lap-pengeluaran').textContent  = rupiahSingkat(keluar);
+  document.getElementById('lap-laba').textContent         = rupiahSingkat(masuk - keluar);
+
+  // Top motor
+  const perMotor = DB.motors.map(m => {
+    const cnt = sewas.filter(s => s.motorId === m.id).length;
+    const pen = sewas.filter(s => s.motorId === m.id).reduce((a,s) => a + Number(s.total||0), 0);
+    return { ...m, cnt, pen };
+  }).filter(m => m.cnt > 0).sort((a,b) => b.cnt - a.cnt).slice(0, 5);
+
+  const topMotorEl = document.getElementById('lap-top-motor');
+  topMotorEl.innerHTML = perMotor.length === 0
+    ? '<div style="font-size:13px;color:var(--text-muted);padding:12px 0">Belum ada data rental di periode ini.</div>'
+    : perMotor.map((m, i) => `
+      <div class="rental-card" style="margin-bottom:8px">
+        <div style="display:flex;align-items:center;gap:12px">
+          <div style="width:28px;height:28px;border-radius:50%;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;flex-shrink:0">${i+1}</div>
+          <div style="flex:1">
+            <div style="font-size:14px;font-weight:700">${m.merek} ${m.tipe}</div>
+            <div style="font-size:12px;color:var(--text-muted)">${m.plat}</div>
+          </div>
+          <div style="text-align:right">
+            <div style="font-weight:800;color:var(--accent)">${m.cnt}x sewa</div>
+            <div style="font-size:12px;color:var(--text-muted)">${rupiahSingkat(m.pen)}</div>
+          </div>
+        </div>
+      </div>`).join('');
+
+  // Top pelanggan
+  const perPel = DB.pelanggan.map(p => {
+    const cnt = sewas.filter(s => s.pelangganId === p.id).length;
+    const val = sewas.filter(s => s.pelangganId === p.id).reduce((a,s) => a + Number(s.total||0), 0);
+    return { ...p, cnt, val };
+  }).filter(p => p.cnt > 0).sort((a,b) => b.cnt - a.cnt).slice(0, 5);
+
+  const topPelEl = document.getElementById('lap-top-pelanggan');
+  topPelEl.innerHTML = perPel.length === 0
+    ? '<div style="font-size:13px;color:var(--text-muted);padding:12px 0">Belum ada data di periode ini.</div>'
+    : perPel.map((p, i) => `
+      <div class="rental-card" style="margin-bottom:8px">
+        <div style="display:flex;align-items:center;gap:12px">
+          <div style="width:28px;height:28px;border-radius:50%;background:${avatarColor(p.nama)};color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;flex-shrink:0">${i+1}</div>
+          <div style="flex:1">
+            <div style="font-size:14px;font-weight:700">${p.nama}</div>
+            <div style="font-size:12px;color:var(--text-muted)">📱 ${p.wa}</div>
+          </div>
+          <div style="text-align:right">
+            <div style="font-weight:800;color:var(--success)">${p.cnt}x sewa</div>
+            <div style="font-size:12px;color:var(--text-muted)">${rupiahSingkat(p.val)}</div>
+          </div>
+        </div>
+      </div>`).join('');
+
+  // Grafik tren (7 hari terakhir)
+  renderChart();
+}
+
+function renderChart() {
+  const canvas = document.getElementById('chart-tren');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const W = canvas.offsetWidth || 300;
+  canvas.width  = W;
+  canvas.height = 160;
+
+  // Ambil 7 hari terakhir
+  const days = [];
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date(); d.setDate(d.getDate() - i);
+    days.push(d.toISOString().split('T')[0]);
+  }
+
+  const vals = days.map(d => {
+    return DB.keuangan
+      .filter(f => f.tanggal === d && f.jenis === 'PEMASUKAN')
+      .reduce((a, f) => a + Number(f.nominal||0), 0);
+  });
+
+  const maxVal = Math.max(...vals, 1);
+  const pad = { t: 10, r: 10, b: 30, l: 50 };
+  const cW = W - pad.l - pad.r;
+  const cH = 160 - pad.t - pad.b;
+  const barW = (cW / 7) * 0.6;
+  const barGap = cW / 7;
+
+  ctx.clearRect(0, 0, W, 160);
+
+  // Grid lines
+  ctx.strokeStyle = '#E4E7EC'; ctx.lineWidth = 1;
+  [0, 0.25, 0.5, 0.75, 1].forEach(f => {
+    const y = pad.t + cH * (1 - f);
+    ctx.beginPath(); ctx.moveTo(pad.l, y); ctx.lineTo(pad.l + cW, y); ctx.stroke();
+    if (f > 0) {
+      ctx.fillStyle = '#9CA3AF'; ctx.font = '10px sans-serif'; ctx.textAlign = 'right';
+      ctx.fillText(rupiahSingkat(maxVal * f), pad.l - 4, y + 3);
+    }
+  });
+
+  // Bars
+  vals.forEach((v, i) => {
+    const x = pad.l + i * barGap + (barGap - barW) / 2;
+    const h = (v / maxVal) * cH;
+    const y = pad.t + cH - h;
+    const grad = ctx.createLinearGradient(0, y, 0, y + h);
+    grad.addColorStop(0, '#3B82F6'); grad.addColorStop(1, '#93C5FD');
+    ctx.fillStyle = v > 0 ? grad : '#E4E7EC';
+    ctx.beginPath();
+    ctx.roundRect(x, y, barW, h || 2, 4);
+    ctx.fill();
+    // Label hari
+    const dayNames = ['Min','Sen','Sel','Rab','Kam','Jum','Sab'];
+    const d = new Date(days[i]);
+    ctx.fillStyle = '#6B7280'; ctx.font = '10px sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText(dayNames[d.getDay()], x + barW/2, 160 - 8);
+  });
+}
+
 // ====================== AUTH SYSTEM ======================
 const AUTH_KEY     = 'dns_rental_session';
 const AUTH_USER_KEY= 'dns_rental_user';
@@ -2398,11 +2879,12 @@ async function loadFromBackend() {
     showToast('🔄 Memuat data dari server...');
 
     // Load semua data paralel
-    const [motors, pelanggan, sewas, dash] = await Promise.all([
+    const [motors, pelanggan, sewas, dash, finData] = await Promise.all([
       apiGet('motors'),
       apiGet('customers'),
       apiGet('rentals'),
       apiGet('dashboard'),
+      apiGet('finance'),
     ]);
 
     // Normalisasi motors ke format lokal
@@ -2434,11 +2916,23 @@ async function loadFromBackend() {
     document.getElementById('st-disewa').textContent   = dash.armada.disewa;
     document.getElementById('st-servis').textContent   = dash.armada.servis;
 
+    // Normalisasi keuangan
+    if (finData && finData.data) {
+      DB.keuangan = finData.data.map(f => ({
+        id: f.ID, jenis: f.JENIS, kategori: f.KATEGORI,
+        tanggal: f.TANGGAL, nominal: Number(f.NOMINAL||0),
+        keterangan: f.KETERANGAN, refId: f.REF_ID,
+      }));
+    }
+
     // Re-render semua halaman
     renderDashboard();
     if (currentPage === 'armada') renderMotor();
     if (currentPage === 'pelanggan') renderPelanggan();
     if (currentPage === 'sewa') renderSewa();
+    if (currentPage === 'keuangan') renderKeuangan();
+    if (currentPage === 'servis') renderServis();
+    if (currentPage === 'laporan') renderLaporan();
 
     // Update badge koneksi
     document.getElementById('mode-badge').style.background = 'var(--success-light)';

@@ -1931,6 +1931,15 @@ function genId(prefix, arr) {
   const n = (arr ? arr.length : 0) + 1;
   return code + '-' + String(n).padStart(3, '0');
 }
+// Tanggal hari ini dalam timezone lokal browser (bukan UTC)
+function todayLocal() {
+  const d = new Date();
+  const y = d.getFullYear();
+  const m = String(d.getMonth()+1).padStart(2,'0');
+  const dd = String(d.getDate()).padStart(2,'0');
+  return `${y}-${m}-${dd}`;
+}
+
 // Konversi tanggal dari GAS (bisa berupa Date object atau string) ke YYYY-MM-DD lokal
 function fmtDateLocal(d) {
   if (!d) return '';
@@ -1975,7 +1984,7 @@ function showPage(page) {
   if (page === 'sewa') renderSewa();
   if (page === 'armada') renderMotor();
   if (page === 'pelanggan') renderPelanggan();
-  if (page === 'keuangan') { updateKategoriOptions(); document.getElementById('fin-tgl').value = new Date().toISOString().split('T')[0]; renderKeuangan(); }
+  if (page === 'keuangan') { updateKategoriOptions(); document.getElementById('fin-tgl').value = todayLocal(); renderKeuangan(); }
   if (page === 'servis') { populateServisMotor(); renderServis(); }
   if (page === 'laporan') renderLaporan();
   if (page === 'perizinan') renderPerizinan();
@@ -2296,7 +2305,7 @@ function populateSewa() {
   const tersedia = DB.motors.filter(m => m.status === 'TERSEDIA');
   mSel.innerHTML = '<option value="">— Pilih Motor —</option>' +
     tersedia.map(m => `<option value="${m.id}">${m.merek} ${m.tipe} · ${m.plat} · ${rupiah(m.harga)}/hr</option>`).join('');
-  const today = new Date().toISOString().split('T')[0];
+  const today = todayLocal();
   document.getElementById('s-mulai').value = today;
   document.getElementById('s-kembali').value = '';
   document.getElementById('s-dp').value = '';
@@ -2355,7 +2364,7 @@ async function tambahSewa() {
     // DEPOSIT field sekarang free text → kirim sebagai JAMINAN
     const jaminan = document.getElementById('s-deposit').value.trim();
     const depositUang = 0; // deposit uang dipisah, sementara 0
-    const today = new Date().toISOString().split('T')[0];
+    const today = todayLocal();
     const payload = { PELANGGAN_ID: pelId, MOTOR_ID: motorId, TGL_MULAI: mulai, TGL_KEMBALI: kembali,
       DP: dp, JAMINAN: jaminan, DEPOSIT_UANG: depositUang,
       TANGGAL_BAYAR_DP: today, // tanggal DP = hari ini, bukan tanggal mulai sewa
@@ -2642,7 +2651,8 @@ function bukaModalPerpanjang(sewaId) {
   // Set min date = tanggal kembali sekarang + 1
   const minDate = new Date(s.kembali);
   minDate.setDate(minDate.getDate() + 1);
-  document.getElementById('perp-tgl').min = minDate.toISOString().split('T')[0];
+  const minY = minDate.getFullYear(), minM = String(minDate.getMonth()+1).padStart(2,'0'), minD = String(minDate.getDate()).padStart(2,'0');
+  document.getElementById('perp-tgl').min = `${minY}-${minM}-${minD}`;
   document.getElementById('perp-tgl').value = '';
   document.getElementById('perp-bayar').value = '';
   document.getElementById('perp-catatan').value = '';
@@ -2699,7 +2709,7 @@ async function simpanPerpanjangan() {
   const perp = {
     id: genId('EXT', DB.perpanjangan),
     sewaId: s.id,
-    tglPerpanjangan: new Date().toISOString().split('T')[0],
+    tglPerpanjangan: todayLocal(),
     tglLama: s.kembali,
     tglBaru: tglBaru,
     durasiTambah: tambah,
@@ -2762,7 +2772,7 @@ function bukaModalPengembalian(sewaId) {
       <span>KM saat ini: <strong>${(m?.km||0).toLocaleString('id-ID')}</strong></span>
     </div>`;
 
-  const today = new Date().toISOString().split('T')[0];
+  const today = todayLocal();
   document.getElementById('kemb-tgl').value = today;
   document.getElementById('kemb-km').value = '';
   document.getElementById('kemb-kondisi').value = 'Baik';
@@ -3051,7 +3061,7 @@ function populateServisMotor() {
   const sel = document.getElementById('svc-motor');
   sel.innerHTML = '<option value="">— Pilih Motor —</option>' +
     DB.motors.map(m => `<option value="${m.id}">${m.merek} ${m.tipe} · ${m.plat} (${m.status})</option>`).join('');
-  document.getElementById('svc-tgl').value = new Date().toISOString().split('T')[0];
+  document.getElementById('svc-tgl').value = todayLocal();
   document.getElementById('svc-biaya').value = '';
   document.getElementById('svc-km').value = '';
   document.getElementById('svc-catatan').value = '';
@@ -3190,7 +3200,7 @@ async function bukaModalBayarSisa(sewaId) {
       </div>
       <div class="form-group">
         <label class="form-label">Tanggal Bayar</label>
-        <input class="form-control" id="bayar-sisa-tgl" type="date" value="${new Date().toISOString().split('T')[0]}">
+        <input class="form-control" id="bayar-sisa-tgl" type="date" value="${todayLocal()}">
       </div>
     </div>
     <div class="form-group">
@@ -3263,7 +3273,7 @@ async function bayarServis(servisId) {
       await apiPost('add_finance', {
         JENIS: 'PENGELUARAN',
         KATEGORI: 'Servis',
-        TANGGAL: new Date().toISOString().split('T')[0],
+        TANGGAL: todayLocal(),
         NOMINAL: s.biaya,
         METODE_PEMBAYARAN: metodeBayar,
         KETERANGAN: `Bayar servis ${m?.merek||''} ${m?.tipe||''} (${m?.plat||''}) — ${s.jenisServis}`,
@@ -3276,7 +3286,7 @@ async function bayarServis(servisId) {
     DB.keuangan.push({
       id: 'F-' + Date.now(),
       jenis: 'PENGELUARAN', kategori: 'Servis',
-      tanggal: new Date().toISOString().split('T')[0],
+      tanggal: todayLocal(),
       nominal: s.biaya, metode: metodeBayar,
       keterangan: `Bayar servis ${m?.plat||''} — ${s.jenisServis}`,
     });
@@ -3437,7 +3447,8 @@ function renderChart() {
   const days = [];
   for (let i = 6; i >= 0; i--) {
     const d = new Date(); d.setDate(d.getDate() - i);
-    days.push(d.toISOString().split('T')[0]);
+    const dy=d.getFullYear(),dm=String(d.getMonth()+1).padStart(2,'0'),dd2=String(d.getDate()).padStart(2,'0');
+    days.push(`${dy}-${dm}-${dd2}`);
   }
 
   const vals = days.map(d => {
@@ -4301,7 +4312,7 @@ if (isLoggedIn()) {
 }
 
 // Set today date default
-document.getElementById('s-mulai').value = new Date().toISOString().split('T')[0];
+document.getElementById('s-mulai').value = todayLocal();
 </script>
 </body>
 </html>

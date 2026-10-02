@@ -2819,17 +2819,29 @@ async function simpanPerpanjangan() {
 }
 
 // ====================== PENGEMBALIAN ======================
-function bukaModalPengembalian(sewaId) {
+async function bukaModalPengembalian(sewaId) {
   const s = DB.sewa.find(x => x.id === sewaId);
   const p = DB.pelanggan.find(x => x.id === s.pelangganId);
   const m = DB.motors.find(x => x.id === s.motorId);
+
+  // Fetch summary terbaru dari backend sebelum buka modal
+  if (isOnline()) {
+    try {
+      const summary = await apiGet('rental_summary', { id: sewaId });
+      // Simpan ke _activeSewa dengan angka authoritative dari backend
+      s.sisaTagihan  = summary.sisaTagihan;
+      s.totalDibayar = summary.totalDibayar;
+      s.totalKewajiban = summary.totalKewajiban;
+      s.statusBayar  = summary.statusPembayaran;
+    } catch(e) { /* pakai cache */ }
+  }
   _activeSewa = s;
 
   document.getElementById('kemb-info').innerHTML = `
     <div style="display:flex;justify-content:space-between;align-items:flex-start">
       <div>
-        <div style="font-weight:700">${p?.nama}</div>
-        <div style="color:var(--text-muted);font-size:12px">${m?.merek} ${m?.tipe} · ${m?.plat}</div>
+        <div style="font-weight:700">${esc(p?.nama||'-')}</div>
+        <div style="color:var(--text-muted);font-size:12px">${esc(m?.merek||'')} ${esc(m?.tipe||'')} · ${esc(m?.plat||'')}</div>
       </div>
       <div style="text-align:right">
         <div style="font-size:12px;color:var(--text-muted)">Seharusnya kembali</div>
@@ -2837,16 +2849,14 @@ function bukaModalPengembalian(sewaId) {
       </div>
     </div>
     <div style="margin-top:8px;display:flex;justify-content:space-between;font-size:12px">
-      <span>Sisa tagihan: <strong style="color:var(--warning)">${rupiah(s.sisaTagihan ?? (s.total - s.dp))}</strong></span>
+      <span>Sisa tagihan: <strong style="color:var(--warning)">${rupiah(s.sisaTagihan)}</strong></span>
       <span>KM saat ini: <strong>${(m?.km||0).toLocaleString('id-ID')}</strong></span>
     </div>`;
 
-  const today = todayLocal();
-  document.getElementById('kemb-tgl').value = today;
+  document.getElementById('kemb-tgl').value = todayLocal();
   document.getElementById('kemb-km').value = '';
   document.getElementById('kemb-kondisi').value = 'Baik';
   document.getElementById('kemb-denda').value = 0;
-  document.getElementById('kemb-pelunasan').value = s.total - s.dp;
   document.getElementById('kemb-catatan').value = '';
   hitungDenda();
 
@@ -2857,14 +2867,13 @@ function bukaModalPengembalian(sewaId) {
 function hitungDenda() {
   const s = _activeSewa;
   if (!s) return;
-  const m = DB.motors.find(x => x.id === s.motorId);
   const tglAktual = document.getElementById('kemb-tgl').value;
   const dendaEl   = document.getElementById('kemb-denda-info');
   if (!tglAktual) return;
   if (tglAktual > s.kembali) {
-    const terlambat = diffDays(s.kembali, tglAktual); // tidak ada minimum — bisa 0
-    // ATURAN BISNIS: denda = HARGA_PER_HARI dari kontrak sewa × hari terlambat
-    const harga = s.harga || m?.harga || 0; // pakai harga dari kontrak (historical snapshot)
+    const terlambat = diffDays(s.kembali, tglAktual);
+    // Harga dari kontrak (historical snapshot), bukan harga motor saat ini
+    const harga = s.harga || 0;
     const denda = terlambat * harga;
     dendaEl.style.display = 'block';
     dendaEl.innerHTML = `⚠️ Terlambat ${terlambat} hari × ${rupiah(harga)}/hari = Denda ${rupiah(denda)}`;
@@ -2879,21 +2888,33 @@ function hitungDenda() {
 function hitungPelunasan() {
   const s = _activeSewa;
   if (!s) return;
-  const denda       = parseInt(document.getElementById('kemb-denda').value) || 0;
-  // Sisa tagihan = total sewa - semua yang sudah dibayar sebelumnya (DP + perpanjangan)
-  const sudahBayar  = Number(s.dp || 0);
-  const sisaSewa    = Number(s.total || 0) - sudahBayar;
-  const totalTagihan = sisaSewa + denda;
-  // Auto-isi jumlah bayar dengan total tagihan
-  document.getElementById('kemb-pelunasan').value = totalTagihan;
+  const denda = parseInt(document.getElementById('kemb-denda').value) || 0;
+
+  // Pakai sisaTagihan dari summary backend (sudah di-fetch saat buka modal)
+  // sisaTagihan = totalKewajiban - totalDibayar, belum termasuk denda keterlambatan
+  const sisaSebelumDenda = s.sisaTagihan || 0;
+  const totalDibayar     = s.totalDibayar || s.dp || 0;
+  const totalKewajiban   = s.totalKewajiban || (sisaSebelumDenda + totalDibayar);
+  const totalHarusBayar  = sisaSebelumDenda + denda;
+
+  document.getElementById('kemb-pelunasan').value = totalHarusBayar;
   document.getElementById('kemb-status-bayar').value = 'Lunas';
   document.getElementById('kemb-kalkulasi').innerHTML = `
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:13px">
-      <div style="color:var(--text-secondary)">Total sewa</div><div style="font-weight:700">${rupiah(s.total)}</div>
-      <div style="color:var(--text-secondary)">Sudah dibayar (DP)</div><div style="font-weight:700;color:var(--success)">-${rupiah(sudahBayar)}</div>
-      <div style="color:var(--text-secondary)">Sisa sewa</div><div style="font-weight:700">${rupiah(sisaSewa)}</div>
-      <div style="color:var(--text-secondary)">Denda</div><div style="font-weight:700;color:var(--danger)">${rupiah(denda)}</div>
-      <div style="color:var(--text-secondary);font-weight:700">Total harus bayar</div><div style="font-weight:800;color:var(--accent)">${rupiah(totalTagihan)}</div>
+      <div style="color:var(--text-secondary)">Total kewajiban sewa</div>
+      <div style="font-weight:700">${rupiah(totalKewajiban)}</div>
+      <div style="color:var(--text-secondary)">Sudah dibayar</div>
+      <div style="font-weight:700;color:var(--success)">-${rupiah(totalDibayar)}</div>
+      <div style="color:var(--text-secondary)">Sisa sewa</div>
+      <div style="font-weight:700">${rupiah(sisaSebelumDenda)}</div>
+      <div style="color:var(--text-secondary)">Denda keterlambatan</div>
+      <div style="font-weight:700;color:var(--danger)">${rupiah(denda)}</div>
+      <div style="color:var(--text-secondary);font-weight:700;border-top:1px solid var(--border);padding-top:4px">
+        Total harus bayar
+      </div>
+      <div style="font-weight:800;color:var(--accent);border-top:1px solid var(--border);padding-top:4px">
+        ${rupiah(totalHarusBayar)}
+      </div>
     </div>`;
   hitungSisaHutang();
 }
@@ -2901,12 +2922,12 @@ function hitungPelunasan() {
 function hitungSisaHutang() {
   const s = _activeSewa;
   if (!s) return;
-  const denda       = parseInt(document.getElementById('kemb-denda').value) || 0;
-  const sudahBayar  = Number(s.dp || 0);
-  const sisaSewa    = Number(s.total || 0) - sudahBayar;
-  const totalTagihan = sisaSewa + denda;
-  const bayarSekarang = parseInt(document.getElementById('kemb-pelunasan').value) || 0;
-  const sisaHutang  = totalTagihan - bayarSekarang;
+  const denda          = parseInt(document.getElementById('kemb-denda').value) || 0;
+  // Pakai sisaTagihan dari summary backend, bukan s.total - s.dp
+  const sisaSebelumDenda = s.sisaTagihan || 0;
+  const totalTagihan   = sisaSebelumDenda + denda;
+  const bayarSekarang  = parseInt(document.getElementById('kemb-pelunasan').value) || 0;
+  const sisaHutang     = totalTagihan - bayarSekarang;
   const infoEl = document.getElementById('kemb-sisa-info');
   if (sisaHutang > 0) {
     infoEl.style.display = 'block';

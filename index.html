@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>MotorKu — Manajemen Rental</title>
+<title>DNS Rental Motor</title>
 <style>
   :root {
     --bg: #F7F8FA;
@@ -549,9 +549,95 @@
   ::-webkit-scrollbar { width: 4px; }
   ::-webkit-scrollbar-track { background: transparent; }
   ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+  /* ── LOGIN SCREEN ── */
+  .login-screen {
+    position: fixed; inset: 0; z-index: 9999;
+    background: linear-gradient(135deg, #1E3A8A 0%, #2563EB 60%, #3B82F6 100%);
+    display: flex; align-items: center; justify-content: center;
+    padding: 24px;
+  }
+  .login-screen.hidden { display: none; }
+  .login-box {
+    background: #fff;
+    border-radius: 20px;
+    padding: 36px 28px;
+    width: 100%; max-width: 380px;
+    box-shadow: 0 20px 60px rgba(0,0,0,.25);
+  }
+  .login-logo { text-align: center; margin-bottom: 28px; }
+  .login-logo .icon {
+    width: 64px; height: 64px;
+    background: var(--accent);
+    border-radius: 18px;
+    display: inline-flex; align-items: center; justify-content: center;
+    font-size: 32px; margin-bottom: 12px;
+  }
+  .login-logo .name { font-size: 20px; font-weight: 800; color: var(--text-primary); }
+  .login-logo .sub  { font-size: 13px; color: var(--text-muted); margin-top: 2px; }
+  .login-error {
+    background: var(--danger-light); color: var(--danger);
+    border-radius: var(--radius-sm); padding: 10px 12px;
+    font-size: 13px; font-weight: 600; margin-bottom: 14px;
+    display: none;
+  }
+  .login-error.show { display: block; }
+  .login-footer { text-align: center; font-size: 11px; color: var(--text-muted); margin-top: 20px; }
+
+  /* Logout btn di sidebar */
+  .sidebar-footer {
+    padding: 12px 10px;
+    border-top: 1px solid var(--border);
+    margin-top: auto;
+  }
+  .user-chip {
+    display: flex; align-items: center; gap: 8px;
+    padding: 8px 10px; border-radius: var(--radius-sm);
+  }
+  .user-avatar {
+    width: 30px; height: 30px; border-radius: 50%;
+    background: var(--accent); color: #fff;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; font-weight: 700; flex-shrink: 0;
+  }
+  .user-name { font-size: 13px; font-weight: 600; }
+  .user-role { font-size: 11px; color: var(--text-muted); }
+  .btn-logout {
+    width: 100%; margin-top: 6px; padding: 8px;
+    background: var(--danger-light); color: var(--danger);
+    border: none; border-radius: var(--radius-sm);
+    font-size: 13px; font-weight: 600; cursor: pointer;
+    display: flex; align-items: center; justify-content: center; gap: 6px;
+  }
+  .btn-logout:hover { background: var(--danger); color: #fff; }
 </style>
 </head>
 <body>
+
+<!-- ============== LOGIN SCREEN ============== -->
+<div class="login-screen" id="login-screen">
+  <div class="login-box">
+    <div class="login-logo">
+      <div class="icon">🏍</div>
+      <div class="name">DNS Rental Motor</div>
+      <div class="sub">Sistem Manajemen Armada</div>
+    </div>
+    <div class="login-error" id="login-error"></div>
+    <div class="form-group">
+      <label class="form-label">Username</label>
+      <input class="form-control" id="login-user" placeholder="Masukkan username" autocomplete="username" onkeydown="if(event.key==='Enter')document.getElementById('login-pass').focus()">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Password</label>
+      <div style="position:relative">
+        <input class="form-control" id="login-pass" type="password" placeholder="Masukkan password" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()" style="padding-right:40px">
+        <button onclick="togglePass()" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:16px;color:var(--text-muted)" id="btn-toggle-pass">👁</button>
+      </div>
+    </div>
+    <button class="btn btn-primary" style="width:100%;margin-top:4px" id="btn-login" onclick="doLogin()">Masuk</button>
+    <div class="login-footer">DNS Rental Motor v1.0 · Sistem internal</div>
+  </div>
+</div>
 
 <div class="app">
   <!-- SIDEBAR -->
@@ -559,8 +645,8 @@
     <div class="sidebar-logo">
       <div class="logo-icon">🏍</div>
       <div>
-        <div class="logo-text">MotorKu</div>
-        <div class="logo-sub">Manajemen Rental</div>
+        <div class="logo-text">DNS Rental Motor</div>
+        <div class="logo-sub">Manajemen Armada</div>
       </div>
     </div>
     <nav class="sidebar-nav">
@@ -594,6 +680,16 @@
         <span class="nav-icon">⚙️</span> Pengaturan
       </button>
     </nav>
+    <div class="sidebar-footer">
+      <div class="user-chip">
+        <div class="user-avatar" id="sidebar-avatar">O</div>
+        <div>
+          <div class="user-name" id="sidebar-username">Owner</div>
+          <div class="user-role">Administrator</div>
+        </div>
+      </div>
+      <button class="btn-logout" onclick="doLogout()">🚪 Keluar</button>
+    </div>
   </aside>
 
   <!-- MAIN -->
@@ -602,11 +698,12 @@
     <div class="topbar">
       <div class="topbar-brand">
         <div class="logo-icon">🏍</div>
-        <span>MotorKu</span>
+        <span>DNS Rental Motor</span>
       </div>
       <div class="topbar-right">
         <button class="topbar-btn" onclick="showToast('🔔 Tidak ada notifikasi baru')">🔔</button>
-        <button class="topbar-btn" onclick="showToast('⚙️ Pengaturan')">⚙️</button>
+        <button class="topbar-btn" onclick="showPage('pengaturan')" title="Pengaturan">⚙️</button>
+        <button class="topbar-btn" onclick="doLogout()" title="Keluar" style="color:var(--danger)">🚪</button>
       </div>
     </div>
 
@@ -892,9 +989,29 @@
         </div>
       </div>
 
+      <!-- Ganti Password -->
+      <div class="section">
+        <div class="card-title">🔑 Ganti Password</div>
+        <div class="card">
+          <div class="form-group">
+            <label class="form-label">Password Lama</label>
+            <input class="form-control" id="pass-lama" type="password" placeholder="Password saat ini">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Password Baru</label>
+            <input class="form-control" id="pass-baru" type="password" placeholder="Minimal 6 karakter">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Konfirmasi Password Baru</label>
+            <input class="form-control" id="pass-konfirm" type="password" placeholder="Ulangi password baru">
+          </div>
+          <button class="btn btn-primary" onclick="gantiPassword()">Simpan Password Baru</button>
+        </div>
+      </div>
+
       <div class="section">
         <div style="padding:14px;background:var(--surface-2);border-radius:var(--radius);border:1px solid var(--border);text-align:center">
-          <div style="font-size:12px;font-weight:700;color:var(--text-secondary)">MotorKu v1.0 — Phase 2</div>
+          <div style="font-size:12px;font-weight:700;color:var(--text-secondary)">DNS Rental Motor v1.0</div>
           <div style="font-size:11px;color:var(--text-muted);margin-top:4px">Frontend: HTML/JS · Backend: Google Apps Script · DB: Google Spreadsheet</div>
         </div>
       </div>
@@ -2029,28 +2146,181 @@ function updateStats() {
   document.getElementById('st-servis').textContent = servis;
 }
 
+// ====================== AUTH SYSTEM ======================
+const AUTH_KEY     = 'dns_rental_session';
+const AUTH_USER_KEY= 'dns_rental_user';
+// Kredensial default — tersimpan di localStorage, bisa diubah dari Pengaturan
+// Format: { username, passwordHash }
+const DEFAULT_CREDS = { username: 'owner', password: 'dns2024' };
+
+function hashStr(str) {
+  // Simple hash untuk localStorage (bukan crypto grade, cukup untuk proteksi dasar)
+  let h = 0;
+  for (let i = 0; i < str.length; i++) {
+    h = Math.imul(31, h) + str.charCodeAt(i) | 0;
+  }
+  return h.toString(36);
+}
+
+function getStoredCreds() {
+  try {
+    const raw = localStorage.getItem('dns_rental_creds');
+    return raw ? JSON.parse(raw) : { username: DEFAULT_CREDS.username, passHash: hashStr(DEFAULT_CREDS.password) };
+  } catch { return { username: DEFAULT_CREDS.username, passHash: hashStr(DEFAULT_CREDS.password) }; }
+}
+
+function isLoggedIn() {
+  return !!sessionStorage.getItem(AUTH_KEY);
+}
+
+function checkAuth() {
+  if (!isLoggedIn()) {
+    showLoginScreen();
+  } else {
+    hideLoginScreen();
+    const user = sessionStorage.getItem(AUTH_USER_KEY) || 'owner';
+    updateUserUI(user);
+  }
+}
+
+function showLoginScreen() {
+  document.getElementById('login-screen').classList.remove('hidden');
+  setTimeout(() => document.getElementById('login-user').focus(), 100);
+}
+
+function hideLoginScreen() {
+  document.getElementById('login-screen').classList.add('hidden');
+}
+
+function updateUserUI(username) {
+  const avatar = document.getElementById('sidebar-avatar');
+  const nameEl = document.getElementById('sidebar-username');
+  if (avatar) avatar.textContent = username.charAt(0).toUpperCase();
+  if (nameEl) nameEl.textContent = username;
+}
+
+function togglePass() {
+  const input = document.getElementById('login-pass');
+  const btn   = document.getElementById('btn-toggle-pass');
+  if (input.type === 'password') { input.type = 'text'; btn.textContent = '🙈'; }
+  else { input.type = 'password'; btn.textContent = '👁'; }
+}
+
+async function doLogin() {
+  const username = document.getElementById('login-user').value.trim();
+  const password = document.getElementById('login-pass').value;
+  const errEl    = document.getElementById('login-error');
+  const btn      = document.getElementById('btn-login');
+
+  if (!username || !password) {
+    errEl.textContent = '⚠️ Username dan password wajib diisi';
+    errEl.classList.add('show'); return;
+  }
+
+  btn.disabled = true; btn.textContent = 'Memverifikasi...';
+  errEl.classList.remove('show');
+
+  // Cek kredensial lokal dulu (cepat, offline-capable)
+  const creds = getStoredCreds();
+  const passHash = hashStr(password);
+
+  let valid = false;
+
+  if (username === creds.username && passHash === creds.passHash) {
+    valid = true;
+  } else if (isOnline()) {
+    // Cek ke backend jika online
+    try {
+      const res = await apiGet('login', { username, passHash });
+      valid = res && res.valid;
+    } catch(e) { /* offline fallback sudah di atas */ }
+  }
+
+  if (valid) {
+    sessionStorage.setItem(AUTH_KEY, '1');
+    sessionStorage.setItem(AUTH_USER_KEY, username);
+    hideLoginScreen();
+    updateUserUI(username);
+    showToast(`👋 Selamat datang, ${username}!`);
+    // Load data setelah login
+    setTimeout(() => testKoneksi(), 300);
+  } else {
+    errEl.textContent = '❌ Username atau password salah';
+    errEl.classList.add('show');
+    document.getElementById('login-pass').value = '';
+    document.getElementById('login-pass').focus();
+  }
+
+  btn.disabled = false; btn.textContent = 'Masuk';
+}
+
+function doLogout() {
+  if (!confirm('Yakin ingin keluar dari aplikasi?')) return;
+  sessionStorage.removeItem(AUTH_KEY);
+  sessionStorage.removeItem(AUTH_USER_KEY);
+  showLoginScreen();
+  document.getElementById('login-user').value = '';
+  document.getElementById('login-pass').value = '';
+  showToast('👋 Berhasil keluar');
+}
+
+function gantiPassword() {
+  const lama    = document.getElementById('pass-lama').value;
+  const baru    = document.getElementById('pass-baru').value;
+  const konfirm = document.getElementById('pass-konfirm').value;
+
+  if (!lama || !baru || !konfirm) { showToast('⚠️ Semua field wajib diisi'); return; }
+
+  const creds = getStoredCreds();
+  if (hashStr(lama) !== creds.passHash) { showToast('❌ Password lama salah'); return; }
+  if (baru.length < 6) { showToast('⚠️ Password baru minimal 6 karakter'); return; }
+  if (baru !== konfirm) { showToast('⚠️ Konfirmasi password tidak cocok'); return; }
+
+  const newCreds = { username: creds.username, passHash: hashStr(baru) };
+  localStorage.setItem('dns_rental_creds', JSON.stringify(newCreds));
+
+  ['pass-lama','pass-baru','pass-konfirm'].forEach(id => document.getElementById(id).value = '');
+  showToast('✅ Password berhasil diubah');
+}
+
 // ====================== API LAYER ======================
 const GAS_URL_KEY = 'motorku_api_url';
+// URL default — otomatis terpakai di semua browser tanpa perlu input ulang
+const GAS_URL_DEFAULT = 'https://script.google.com/macros/s/AKfycby4lUgavwp-mAHutdntVUve1wsJd44YBILhBTk8XIEGzQcFKdR3CZCLuyzEZDyDLdw/exec';
 
-function getApiUrl() { return localStorage.getItem(GAS_URL_KEY) || ''; }
+function getApiUrl() {
+  return localStorage.getItem(GAS_URL_KEY) || GAS_URL_DEFAULT;
+}
 
 async function apiGet(action, params = {}) {
-  const url = new URL(getApiUrl());
+  const base = getApiUrl();
+  const url  = new URL(base);
   url.searchParams.set('action', action);
   Object.entries(params).forEach(([k,v]) => url.searchParams.set(k, v));
-  const res  = await fetch(url.toString());
-  const json = await res.json();
+  // GAS GET → fetch biasa, response JSON langsung
+  const res  = await fetch(url.toString(), { redirect: 'follow' });
+  const text = await res.text();
+  let json;
+  try { json = JSON.parse(text); }
+  catch(e) { throw new Error('Response bukan JSON — cek deployment GAS'); }
   if (!json.success) throw new Error(json.error || 'Error dari server');
   return json.data;
 }
 
 async function apiPost(action, data = {}) {
-  const res  = await fetch(getApiUrl(), {
+  const base = getApiUrl();
+  // GAS POST — kirim sebagai form URLencoded agar tidak kena CORS preflight
+  const payload = encodeURIComponent(JSON.stringify({ action, data }));
+  const res = await fetch(base, {
     method:  'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body:    JSON.stringify({ action, data }),
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body:    'payload=' + payload,
+    redirect: 'follow',
   });
-  const json = await res.json();
+  const text = await res.text();
+  let json;
+  try { json = JSON.parse(text); }
+  catch(e) { throw new Error('Response bukan JSON — cek deployment GAS'); }
   if (!json.success) throw new Error(json.error || 'Error dari server');
   return json.data;
 }
@@ -2110,7 +2380,7 @@ async function testKoneksi() {
     const data = await apiGet('ping');
     icon.textContent  = '🟢';
     label.textContent = 'Terhubung ke Backend';
-    sub.textContent   = `MotorKu API v${data.version} · ${new Date(data.time).toLocaleTimeString('id-ID')}`;
+    sub.textContent   = `DNS Rental Motor API v${data.version} · ${new Date(data.time).toLocaleTimeString('id-ID')}`;
     showToast('✅ Koneksi berhasil!');
     // Load data dari backend
     await loadFromBackend();
@@ -2200,7 +2470,12 @@ window.tambahMotorOnline = async function(payload) {
 renderDashboard();
 updateStats();
 updateKoneksiUI();
-if (isOnline()) testKoneksi();
+
+// Cek auth — tampilkan login screen jika belum login
+checkAuth();
+
+// Auto-load dari backend hanya jika sudah login
+if (isLoggedIn()) setTimeout(() => testKoneksi(), 500);
 
 // Set today date default
 document.getElementById('s-mulai').value = new Date().toISOString().split('T')[0];

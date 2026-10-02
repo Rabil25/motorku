@@ -3746,23 +3746,14 @@ function safeUrl(url) {
 }
 
 // ====================== AUTH v3 — SERVER-SIDE ======================
-// Hash password dengan SHA-256-like (crypto.subtle, atau fallback djb2)
+// Hash password — djb2, konsisten dengan backend (createOwnerAccount & resetPasswordToDefault)
 async function hashPassword(password) {
-  if (window.crypto && window.crypto.subtle) {
-    try {
-      const msgBuffer = new TextEncoder().encode(password);
-      const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
-      const hashArray = Array.from(new Uint8Array(hashBuffer));
-      return hashArray.map(b => b.toString(16).padStart(2,'0')).join('');
-    } catch(e) { /* fallback */ }
-  }
-  // Fallback djb2 hash (non-crypto, only for offline mode)
   let h = 5381;
   for (let i = 0; i < password.length; i++) {
     h = ((h << 5) + h) + password.charCodeAt(i);
     h = h & 0xFFFFFFFF;
   }
-  return (h >>> 0).toString(16).padStart(8,'0');
+  return (h >>> 0).toString(16).padStart(8, '0');
 }
 
 const SESSION_KEY = 'dns_session_token';

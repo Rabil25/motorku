@@ -614,6 +614,43 @@
   }
   .btn-logout:hover { background: var(--danger); color: #fff; }
 
+  /* Upload Box */
+  .upload-box {
+    border: 2px dashed var(--border);
+    border-radius: var(--radius-sm);
+    padding: 16px;
+    text-align: center;
+    cursor: pointer;
+    transition: border-color .15s, background .15s;
+    background: var(--surface-2);
+    position: relative;
+  }
+  .upload-box:hover { border-color: var(--accent); background: var(--accent-light); }
+  .upload-box.has-photo { border-style: solid; border-color: var(--success); background: var(--success-light); padding: 4px; }
+
+  /* Status badge pelanggan */
+  .badge-vip { background: #FEF3C7; color: #92400E; }
+  .badge-vip::before { background: #F59E0B; }
+  .badge-blacklist { background: var(--danger-light); color: var(--danger); }
+  .badge-blacklist::before { background: var(--danger); }
+  .badge-rekomendasi { background: var(--purple-light); color: var(--purple); }
+  .badge-rekomendasi::before { background: var(--purple); }
+  .badge-baik { background: var(--success-light); color: var(--success); }
+  .badge-baik::before { background: var(--success); }
+
+  /* Perizinan */
+  .izin-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px;
+    margin-bottom: 8px;
+    box-shadow: var(--shadow);
+  }
+  .izin-expired { border-left: 3px solid var(--danger); }
+  .izin-hampir { border-left: 3px solid var(--warning); }
+  .izin-aktif { border-left: 3px solid var(--success); }
+
   /* Reload bar */
   .reload-bar {
     display: flex; align-items: center; justify-content: space-between;
@@ -714,6 +751,9 @@
       </button>
       <button class="nav-item" onclick="showPage('laporan')">
         <span class="nav-icon">📊</span> Laporan
+      </button>
+      <button class="nav-item" onclick="showPage('perizinan')">
+        <span class="nav-icon">📄</span> Perizinan
       </button>
       <div class="nav-section-label">Sistem</div>
       <button class="nav-item" onclick="showPage('pengaturan')">
@@ -1018,6 +1058,26 @@
       </div>
     </div>
 
+    <!-- ===================== PERIZINAN ===================== -->
+    <div id="page-perizinan" class="page">
+      <div class="page-header">
+        <div class="page-title">Perizinan Usaha</div>
+        <div class="page-sub">Dokumen & izin operasional</div>
+      </div>
+      <!-- Alert dokumen akan expired -->
+      <div id="perizinan-alert" style="display:none;margin:0 16px 12px;padding:12px;background:var(--warning-light);border-radius:var(--radius);border:1px solid var(--warning);font-size:13px;color:var(--warning)"></div>
+      <div class="filter-chips">
+        <button class="chip izin-chip active" onclick="filterIzin('semua',this)">Semua</button>
+        <button class="chip izin-chip" onclick="filterIzin('Aktif',this)">Aktif</button>
+        <button class="chip izin-chip" onclick="filterIzin('Hampir Expired',this)">Hampir Expired</button>
+        <button class="chip izin-chip" onclick="filterIzin('Expired',this)">Expired</button>
+      </div>
+      <div class="section">
+        <div id="perizinan-list"></div>
+      </div>
+      <button class="fab" onclick="openModal('modal-tambah-izin')">＋</button>
+    </div>
+
     <!-- ===================== PENGATURAN ===================== -->
     <div id="page-pengaturan" class="page">
       <div class="page-header">
@@ -1156,39 +1216,84 @@
       <button class="modal-close" onclick="closeModal('modal-tambah-motor')">✕</button>
     </div>
     <div class="modal-body">
+      <div style="font-size:11px;font-weight:700;color:var(--text-muted);margin-bottom:10px;text-transform:uppercase;letter-spacing:.05em">Identitas Motor</div>
+      <div class="form-group">
+        <label class="form-label">Nama Sebutan Motor</label>
+        <input class="form-control" id="m-nama" placeholder="Contoh: Beat Hitam Bu Ani, NMAX Biru...">
+      </div>
       <div class="form-row">
         <div class="form-group">
           <label class="form-label">Nomor Polisi *</label>
           <input class="form-control" id="m-plat" placeholder="BE 1234 XX" oninput="this.value=this.value.toUpperCase()">
         </div>
         <div class="form-group">
-          <label class="form-label">Merek *</label>
-          <input class="form-control" id="m-merek" placeholder="Honda, Yamaha...">
+          <label class="form-label">Warna</label>
+          <input class="form-control" id="m-warna" placeholder="Hitam, Putih...">
         </div>
       </div>
       <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Merek *</label>
+          <input class="form-control" id="m-merek" placeholder="Honda, Yamaha...">
+        </div>
         <div class="form-group">
           <label class="form-label">Tipe *</label>
           <input class="form-control" id="m-tipe" placeholder="Beat, NMAX...">
         </div>
+      </div>
+      <div class="form-row">
         <div class="form-group">
           <label class="form-label">Tahun</label>
           <input class="form-control" id="m-tahun" type="number" placeholder="2022">
         </div>
-      </div>
-      <div class="form-row">
         <div class="form-group">
           <label class="form-label">Harga Sewa/Hari (Rp) *</label>
           <input class="form-control" id="m-harga" type="number" placeholder="100000">
         </div>
+      </div>
+      <div class="form-row">
         <div class="form-group">
           <label class="form-label">KM Saat Ini</label>
           <input class="form-control" id="m-km" type="number" placeholder="12500">
         </div>
+        <div class="form-group">
+          <label class="form-label">Tanggal Beli</label>
+          <input class="form-control" id="m-tglbeli" type="date">
+        </div>
+      </div>
+      <div style="font-size:11px;font-weight:700;color:var(--text-muted);margin:12px 0 10px;text-transform:uppercase;letter-spacing:.05em">Dokumen & Kepemilikan</div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Nomor Mesin</label>
+          <input class="form-control" id="m-nomesin" placeholder="Nomor mesin">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Nomor Rangka</label>
+          <input class="form-control" id="m-norangka" placeholder="Nomor rangka">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Status Pajak</label>
+          <select class="form-control" id="m-statuspajak">
+            <option value="Aktif">Aktif</option>
+            <option value="Hampir Expired">Hampir Expired</option>
+            <option value="Mati">Mati</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Kepemilikan</label>
+          <select class="form-control" id="m-kepemilikan">
+            <option value="Milik Pribadi">Milik Pribadi</option>
+            <option value="Over Gadai">Over Gadai</option>
+            <option value="Kredit">Kredit</option>
+            <option value="Sewa">Sewa</option>
+          </select>
+        </div>
       </div>
       <div class="form-group">
         <label class="form-label">Catatan</label>
-        <input class="form-control" id="m-catatan" placeholder="Kondisi, warna, dll...">
+        <input class="form-control" id="m-catatan" placeholder="Kondisi, info tambahan...">
       </div>
       <div class="form-actions">
         <button class="btn btn-secondary" onclick="closeModal('modal-tambah-motor')">Batal</button>
@@ -1207,24 +1312,92 @@
       <button class="modal-close" onclick="closeModal('modal-tambah-pelanggan')">✕</button>
     </div>
     <div class="modal-body">
+      <div style="font-size:11px;font-weight:700;color:var(--text-muted);margin-bottom:10px;text-transform:uppercase;letter-spacing:.05em">Data Diri</div>
       <div class="form-group">
         <label class="form-label">Nama Lengkap *</label>
-        <input class="form-control" id="p-nama" placeholder="Nama pelanggan">
+        <input class="form-control" id="p-nama" placeholder="Nama sesuai identitas">
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Jenis Kelamin</label>
+          <select class="form-control" id="p-jk">
+            <option value="">— Pilih —</option>
+            <option>Laki-laki</option>
+            <option>Perempuan</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Pekerjaan</label>
+          <input class="form-control" id="p-pekerjaan" placeholder="Wiraswasta, PNS...">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Nomor WhatsApp *</label>
+          <input class="form-control" id="p-wa" type="tel" placeholder="08xxxxxxxxxx">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Kota</label>
+          <input class="form-control" id="p-kota" placeholder="Kota domisili">
+        </div>
       </div>
       <div class="form-group">
-        <label class="form-label">Nomor WhatsApp *</label>
-        <input class="form-control" id="p-wa" type="tel" placeholder="08xxxxxxxxxx">
+        <label class="form-label">Alamat Lengkap</label>
+        <input class="form-control" id="p-alamat" placeholder="Jalan, RT/RW, Kelurahan...">
+      </div>
+      <div style="font-size:11px;font-weight:700;color:var(--text-muted);margin:12px 0 10px;text-transform:uppercase;letter-spacing:.05em">Identitas</div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Jenis Identitas</label>
+          <select class="form-control" id="p-jenisid">
+            <option value="KTP">KTP</option>
+            <option value="SIM">SIM</option>
+            <option value="Paspor">Paspor</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Nomor Identitas</label>
+          <input class="form-control" id="p-ktp" placeholder="NIK / Nomor SIM">
+        </div>
+      </div>
+      <!-- Upload Foto KTP -->
+      <div class="form-group">
+        <label class="form-label">Foto KTP / Identitas <span style="color:var(--text-muted)">(opsional)</span></label>
+        <div class="upload-box" id="upload-ktp-box" onclick="document.getElementById('upload-ktp').click()">
+          <input type="file" id="upload-ktp" accept="image/*" style="display:none" onchange="previewFoto('upload-ktp','preview-ktp','upload-ktp-box')">
+          <div id="preview-ktp-wrap">
+            <div style="font-size:24px">📷</div>
+            <div style="font-size:12px;color:var(--text-muted);margin-top:4px">Ketuk untuk upload foto KTP</div>
+          </div>
+          <img id="preview-ktp" style="display:none;width:100%;border-radius:6px;max-height:160px;object-fit:cover">
+        </div>
+      </div>
+      <div style="font-size:11px;font-weight:700;color:var(--text-muted);margin:12px 0 10px;text-transform:uppercase;letter-spacing:.05em">Klasifikasi</div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Jenis Penyewa</label>
+          <select class="form-control" id="p-jenispenyewa">
+            <option value="Individu">Individu</option>
+            <option value="Perusahaan">Perusahaan</option>
+            <option value="Agen">Agen</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Status Pelanggan</label>
+          <select class="form-control" id="p-status">
+            <option value="Baik">Baik</option>
+            <option value="VIP">VIP</option>
+            <option value="Rekomendasi">Rekomendasi</option>
+            <option value="Blacklist">Blacklist</option>
+          </select>
+        </div>
       </div>
       <div class="form-group">
-        <label class="form-label">Nomor KTP</label>
-        <input class="form-control" id="p-ktp" placeholder="16 digit NIK">
+        <label class="form-label">Rekomendasi Dari</label>
+        <input class="form-control" id="p-referral" placeholder="Nama yang merekomendasikan (opsional)">
       </div>
       <div class="form-group">
-        <label class="form-label">Alamat</label>
-        <input class="form-control" id="p-alamat" placeholder="Alamat lengkap">
-      </div>
-      <div class="form-group">
-        <label class="form-label">Catatan</label>
+        <label class="form-label">Catatan Khusus</label>
         <input class="form-control" id="p-catatan" placeholder="Catatan tambahan...">
       </div>
       <div class="form-actions">
@@ -1266,16 +1439,59 @@
           <input class="form-control" id="s-kembali" type="date" onchange="hitungDurasi()">
         </div>
       </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Jam Keluar</label>
+          <input class="form-control" id="s-jam-keluar" type="time" value="08:00">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Jam Kembali (Est.)</label>
+          <input class="form-control" id="s-jam-kembali" type="time" value="08:00">
+        </div>
+      </div>
       <div style="background:var(--surface-2);border-radius:var(--radius-sm);padding:12px;margin-bottom:14px;font-size:13px;" id="s-kalkulasi">
         <div style="color:var(--text-muted)">Pilih motor dan tanggal untuk melihat kalkulasi.</div>
       </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">DP (Uang Muka)</label>
+          <input class="form-control" id="s-dp" type="number" placeholder="0" oninput="hitungDurasi()">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Deposit / Jaminan</label>
+          <input class="form-control" id="s-deposit" type="number" placeholder="0">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Metode Pembayaran</label>
+          <select class="form-control" id="s-metode">
+            <option value="Cash">Cash</option>
+            <option value="Transfer">Transfer</option>
+            <option value="QRIS">QRIS</option>
+            <option value="Lainnya">Lainnya</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Lokasi Antar</label>
+          <input class="form-control" id="s-lokasi" placeholder="Ambil sendiri / Alamat antar">
+        </div>
+      </div>
+      <!-- Foto Pengambilan Motor -->
       <div class="form-group">
-        <label class="form-label">DP (Uang Muka)</label>
-        <input class="form-control" id="s-dp" type="number" placeholder="0" oninput="hitungDurasi()">
+        <label class="form-label">Foto Kondisi Motor Saat Keluar <span style="color:var(--text-muted)">(opsional)</span></label>
+        <div class="upload-box" id="upload-foto-motor-box" onclick="document.getElementById('upload-foto-motor').click()">
+          <input type="file" id="upload-foto-motor" accept="image/*" style="display:none" onchange="previewFoto('upload-foto-motor','preview-foto-motor','upload-foto-motor-box')">
+          <div id="preview-foto-motor-wrap">
+            <div style="font-size:24px">🏍</div>
+            <div style="font-size:12px;color:var(--text-muted);margin-top:4px">Foto kondisi motor sebelum keluar</div>
+          </div>
+          <img id="preview-foto-motor" style="display:none;width:100%;border-radius:6px;max-height:160px;object-fit:cover">
+        </div>
       </div>
       <div class="form-group">
         <label class="form-label">Catatan</label>
-        <input class="form-control" id="s-catatan" placeholder="Tujuan, keperluan, dll...">
+        <input class="form-control" id="s-catatan" placeholder="Tujuan, keperluan, permintaan khusus...">
       </div>
       <div class="form-actions">
         <button class="btn btn-secondary" onclick="closeModal('modal-tambah-sewa')">Batal</button>
@@ -1472,34 +1688,148 @@
         <label class="form-label">Jenis Servis *</label>
         <select class="form-control" id="svc-jenis">
           <option>Ganti Oli</option>
-          <option>Servis Rutin</option>
+          <option>Ganti Filter Oli</option>
+          <option>Servis Ringan</option>
+          <option>Servis Sedang</option>
+          <option>Servis Berat</option>
+          <option>Servis Berkala</option>
+          <option>Tune Up</option>
           <option>Ganti Ban</option>
           <option>Ganti Aki</option>
-          <option>Servis Rem</option>
-          <option>Tune Up</option>
+          <option>Ganti Kampas Rem</option>
           <option>Ganti Sparepart</option>
-          <option>Servis Besar</option>
           <option>Lainnya</option>
         </select>
       </div>
       <div class="form-group">
-        <label class="form-label">Biaya (Rp)</label>
-        <input class="form-control" id="svc-biaya" type="number" placeholder="0">
+        <label class="form-label">Detail Servis</label>
+        <input class="form-control" id="svc-detail" placeholder="Sparepart yang diganti, kondisi, dll...">
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Nama Bengkel</label>
+          <input class="form-control" id="svc-bengkel" placeholder="Nama bengkel">
+        </div>
+        <div class="form-group">
+          <label class="form-label">No HP Bengkel</label>
+          <input class="form-control" id="svc-hpbengkel" type="tel" placeholder="08xxx">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Biaya (Rp)</label>
+          <input class="form-control" id="svc-biaya" type="number" placeholder="0">
+        </div>
+        <div class="form-group">
+          <label class="form-label">KM Servis Berikutnya</label>
+          <input class="form-control" id="svc-kmberikutnya" type="number" placeholder="Contoh: 16000">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Ada Nota?</label>
+          <select class="form-control" id="svc-nota">
+            <option value="Ya">Ya</option>
+            <option value="Tidak">Tidak</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Status Pembayaran</label>
+          <select class="form-control" id="svc-statuspembayaran">
+            <option value="Sudah Dibayar">Sudah Dibayar</option>
+            <option value="Belum Dibayar">Belum Dibayar</option>
+            <option value="Hutang Vendor">Hutang Vendor</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group" id="svc-hutang-wrap" style="display:none">
+        <label class="form-label">Tanggal Jatuh Tempo Hutang</label>
+        <input class="form-control" id="svc-jatuhtempo" type="date">
       </div>
       <div class="form-group">
-        <label class="form-label">Status</label>
-        <select class="form-control" id="svc-status">
+        <label class="form-label">Status Motor Setelah Servis</label>
+        <select class="form-control" id="svc-status" onchange="document.getElementById('svc-hutang-wrap').style.display=document.getElementById('svc-statuspembayaran').value==='Hutang Vendor'?'block':'none'">
           <option value="SELESAI">Selesai — motor kembali tersedia</option>
           <option value="PROSES">Masih dalam servis</option>
         </select>
       </div>
       <div class="form-group">
         <label class="form-label">Catatan</label>
-        <input class="form-control" id="svc-catatan" placeholder="Detail pekerjaan...">
+        <input class="form-control" id="svc-catatan" placeholder="Catatan tambahan...">
       </div>
       <div class="form-actions">
         <button class="btn btn-secondary" onclick="closeModal('modal-tambah-servis')">Batal</button>
         <button class="btn btn-primary" onclick="simpanServis()">Simpan Servis</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============== MODAL: TAMBAH PERIZINAN ============== -->
+<div class="modal-backdrop" id="modal-tambah-izin" onclick="closeModalOnBackdrop(event,'modal-tambah-izin')">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-header">
+      <div class="modal-title">📄 Tambah Dokumen Perizinan</div>
+      <button class="modal-close" onclick="closeModal('modal-tambah-izin')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label">Nama Dokumen *</label>
+        <input class="form-control" id="izin-nama" placeholder="STNK, Pajak Kendaraan, SIUP...">
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Jenis Perizinan</label>
+          <select class="form-control" id="izin-jenis">
+            <option>NIB</option>
+            <option>NPWP</option>
+            <option>SIUP</option>
+            <option>TDP</option>
+            <option>STNK Kendaraan</option>
+            <option>Pajak Kendaraan</option>
+            <option>Asuransi Kendaraan</option>
+            <option>Izin Usaha Rental</option>
+            <option>Kontrak Kerjasama</option>
+            <option>Lainnya</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Nomor Dokumen</label>
+          <input class="form-control" id="izin-nomor" placeholder="Nomor/kode dokumen">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Tanggal Terbit</label>
+          <input class="form-control" id="izin-terbit" type="date">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Tanggal Expired *</label>
+          <input class="form-control" id="izin-expired" type="date">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Instansi / Penerbit</label>
+          <input class="form-control" id="izin-instansi" placeholder="Samsat, Kemenkumham...">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Biaya Perpanjangan</label>
+          <input class="form-control" id="izin-biaya" type="number" placeholder="0">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">PIC / Penanggung Jawab</label>
+        <input class="form-control" id="izin-pic" placeholder="Nama penanggung jawab">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Keterangan</label>
+        <input class="form-control" id="izin-ket" placeholder="Catatan tambahan...">
+      </div>
+      <div class="form-actions">
+        <button class="btn btn-secondary" onclick="closeModal('modal-tambah-izin')">Batal</button>
+        <button class="btn btn-primary" onclick="simpanIzin()">Simpan Dokumen</button>
       </div>
     </div>
   </div>
@@ -1575,6 +1905,7 @@ function showPage(page) {
   if (page === 'keuangan') { updateKategoriOptions(); document.getElementById('fin-tgl').value = new Date().toISOString().split('T')[0]; renderKeuangan(); }
   if (page === 'servis') { populateServisMotor(); renderServis(); }
   if (page === 'laporan') renderLaporan();
+  if (page === 'perizinan') renderPerizinan();
   // scroll to top
   document.getElementById('page-' + page).scrollTop = 0;
 }
@@ -1671,12 +2002,13 @@ function renderMotor(filter, search) {
     <div class="motor-card" onclick="openDetailMotor('${m.id}')">
       <div class="motor-thumb">${motorEmoji(m.tipe)}</div>
       <div class="motor-info">
-        <div class="motor-name">${m.merek} ${m.tipe}</div>
-        <div class="motor-plat">${m.plat} · ${m.tahun}</div>
+        <div class="motor-name">${m.nama||m.merek+' '+m.tipe}</div>
+        <div class="motor-plat">${m.plat} · ${m.tahun||''}${m.warna?' · '+m.warna:''}</div>
         <div class="motor-meta">
           ${badgeHtml(m.status)}
           <span class="motor-price">${rupiah(m.harga)}/hari</span>
-          <span class="motor-km">${m.km.toLocaleString('id-ID')} km</span>
+          <span class="motor-km">${(m.km||0).toLocaleString('id-ID')} km</span>
+          ${m.statusPajak&&m.statusPajak!=='Aktif'?`<span style="font-size:11px;font-weight:600;color:${m.statusPajak==='Mati'?'var(--danger)':'var(--warning)'}">Pajak ${m.statusPajak}</span>`:''}
         </div>
       </div>
     </div>
@@ -1703,15 +2035,26 @@ function renderPelanggan(search) {
     el.innerHTML = `<div class="empty-state"><div class="empty-icon">👤</div><div class="empty-title">Pelanggan tidak ditemukan</div></div>`;
     return;
   }
+  const statusBadgeMap = {
+    'Blacklist':   'blacklist',
+    'VIP':         'vip',
+    'Rekomendasi': 'rekomendasi',
+    'Baik':        'baik',
+  };
   el.innerHTML = data.map(p => `
     <div class="pelanggan-card" onclick="openDetailPelanggan('${p.id}')">
-      <div class="avatar" style="background:${avatarColor(p.nama)}">${p.nama.charAt(0)}</div>
+      <div class="avatar" style="background:${p.statusPel==='Blacklist'?'var(--danger)':avatarColor(p.nama)}">${p.nama.charAt(0)}</div>
       <div class="pelanggan-info">
-        <div class="pelanggan-name">${p.nama}</div>
-        <div class="pelanggan-wa">📱 ${p.wa}</div>
+        <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+          <div class="pelanggan-name">${p.nama}</div>
+          ${p.statusPel && p.statusPel!=='Baik'?`<span class="badge badge-${statusBadgeMap[p.statusPel]||'baik'}">${p.statusPel}</span>`:''}
+          ${p.fotoKtp?'<span style="font-size:14px" title="Foto KTP tersedia">🪪</span>':''}
+        </div>
+        <div class="pelanggan-wa">📱 ${p.wa}${p.kota?' · 📍 '+p.kota:''}</div>
         <div class="pelanggan-stats">
-          <span class="pelanggan-stat"><strong>${p.totalSewa}x</strong> sewa</span>
-          <span class="pelanggan-stat"><strong>${rupiah(p.totalNilai)}</strong> total</span>
+          <span class="pelanggan-stat"><strong>${p.totalSewa||0}x</strong> sewa</span>
+          <span class="pelanggan-stat"><strong>${rupiah(p.totalNilai||0)}</strong> total</span>
+          ${p.jenisPenyewa&&p.jenisPenyewa!=='Individu'?`<span class="pelanggan-stat"><strong>${p.jenisPenyewa}</strong></span>`:''}
         </div>
       </div>
     </div>
@@ -1766,29 +2109,42 @@ function filterSewaStatus(f, btn) {
 
 // ====================== TAMBAH MOTOR ======================
 async function tambahMotor() {
-  const plat = document.getElementById('m-plat').value.trim().toUpperCase();
-  const merek = document.getElementById('m-merek').value.trim();
-  const tipe = document.getElementById('m-tipe').value.trim();
-  const tahun = parseInt(document.getElementById('m-tahun').value) || new Date().getFullYear();
-  const harga = parseInt(document.getElementById('m-harga').value);
-  const km = parseInt(document.getElementById('m-km').value) || 0;
-  const catatan = document.getElementById('m-catatan').value.trim();
+  const plat   = document.getElementById('m-plat').value.trim().toUpperCase();
+  const merek  = document.getElementById('m-merek').value.trim();
+  const tipe   = document.getElementById('m-tipe').value.trim();
+  const tahun  = parseInt(document.getElementById('m-tahun').value) || new Date().getFullYear();
+  const harga  = parseInt(document.getElementById('m-harga').value);
+  const km     = parseInt(document.getElementById('m-km').value) || 0;
+  const nama   = document.getElementById('m-nama').value.trim();
+  const warna  = document.getElementById('m-warna').value.trim();
+  const noMesin  = document.getElementById('m-nomesin').value.trim();
+  const noRangka = document.getElementById('m-norangka').value.trim();
+  const tglBeli  = document.getElementById('m-tglbeli').value;
+  const statusPajak   = document.getElementById('m-statuspajak').value;
+  const kepemilikan   = document.getElementById('m-kepemilikan').value;
+  const catatan  = document.getElementById('m-catatan').value.trim();
 
   if (!plat || !merek || !tipe || !harga) { showToast('⚠️ Isi semua field yang wajib'); return; }
   if (DB.motors.find(m => m.plat === plat)) { showToast('⚠️ Nomor polisi sudah terdaftar'); return; }
 
   let motor;
   try {
+    const payload = { NOMOR_POLISI: plat, NAMA_SEBUTAN: nama, MEREK: merek, TIPE: tipe, TAHUN: tahun,
+      HARGA_SEWA: harga, KILOMETER: km, WARNA: warna, NOMOR_MESIN: noMesin, NOMOR_RANGKA: noRangka,
+      TANGGAL_BELI: tglBeli, STATUS_PAJAK: statusPajak, KEPEMILIKAN: kepemilikan, CATATAN: catatan };
     if (isOnline()) {
       showToast('🔄 Menyimpan ke database...');
-      const res = await apiPost('add_motor', { NOMOR_POLISI: plat, MEREK: merek, TIPE: tipe, TAHUN: tahun, HARGA_SEWA: harga, KILOMETER: km, CATATAN: catatan });
-      motor = { id: res.ID, plat: res.NOMOR_POLISI, merek: res.MEREK, tipe: res.TIPE, tahun: res.TAHUN, harga: Number(res.HARGA_SEWA), km: Number(res.KILOMETER), status: 'TERSEDIA', catatan: res.CATATAN };
+      const res = await apiPost('add_motor', payload);
+      motor = { id: res.ID, plat: res.NOMOR_POLISI, nama: res.NAMA_SEBUTAN, merek: res.MEREK, tipe: res.TIPE,
+        tahun: res.TAHUN, harga: Number(res.HARGA_SEWA), km: Number(res.KILOMETER), warna: res.WARNA,
+        statusPajak: res.STATUS_PAJAK, kepemilikan: res.KEPEMILIKAN, status: 'TERSEDIA', catatan: res.CATATAN };
     } else {
-      motor = { id: genId('M', DB.motors), plat, merek, tipe, tahun, harga, km, status: 'TERSEDIA', catatan };
+      motor = { id: genId('M', DB.motors), plat, nama, merek, tipe, tahun, harga, km, warna,
+        noMesin, noRangka, tglBeli, statusPajak, kepemilikan, status: 'TERSEDIA', catatan };
     }
     DB.motors.push(motor);
-    DB.aktivitas.unshift({ type: 'green', teks: `Motor baru: ${merek} ${tipe} (${plat})`, waktu: 'Baru saja' });
-    ['m-plat','m-merek','m-tipe','m-tahun','m-harga','m-km','m-catatan'].forEach(i => document.getElementById(i).value = '');
+    DB.aktivitas.unshift({ type: 'green', teks: `Motor baru: ${nama||merek+' '+tipe} (${plat})`, waktu: 'Baru saja' });
+    ['m-plat','m-nama','m-merek','m-tipe','m-tahun','m-harga','m-km','m-warna','m-nomesin','m-norangka','m-tglbeli','m-catatan'].forEach(i => { if(document.getElementById(i)) document.getElementById(i).value=''; });
     closeModal('modal-tambah-motor');
     showToast('✅ Motor berhasil ditambahkan');
     updateStats();
@@ -1798,26 +2154,52 @@ async function tambahMotor() {
 
 // ====================== TAMBAH PELANGGAN ======================
 async function tambahPelanggan() {
-  const nama = document.getElementById('p-nama').value.trim();
-  const wa = document.getElementById('p-wa').value.trim();
-  const ktp = document.getElementById('p-ktp').value.trim();
+  const nama   = document.getElementById('p-nama').value.trim();
+  const wa     = document.getElementById('p-wa').value.trim();
+  const ktp    = document.getElementById('p-ktp').value.trim();
   const alamat = document.getElementById('p-alamat').value.trim();
   const catatan = document.getElementById('p-catatan').value.trim();
+  const jk     = document.getElementById('p-jk').value;
+  const pekerjaan = document.getElementById('p-pekerjaan').value.trim();
+  const kota   = document.getElementById('p-kota').value.trim();
+  const jenisId = document.getElementById('p-jenisid').value;
+  const jenisPenyewa = document.getElementById('p-jenispenyewa').value;
+  const statusPel = document.getElementById('p-status').value;
+  const referral  = document.getElementById('p-referral').value.trim();
 
   if (!nama || !wa) { showToast('⚠️ Nama dan WhatsApp wajib diisi'); return; }
+  if (statusPel === 'Blacklist') {
+    if (!confirm(`⚠️ Pelanggan ${nama} akan ditandai BLACKLIST. Lanjutkan?`)) return;
+  }
+
+  // Ambil foto KTP base64 (opsional)
+  const fotoKtp = await getBase64('upload-ktp');
 
   let pel;
   try {
+    const payload = { NAMA: nama, NO_WA: wa, NO_KTP: ktp, ALAMAT: alamat, CATATAN: catatan,
+      JENIS_KELAMIN: jk, PEKERJAAN: pekerjaan, KOTA: kota, JENIS_IDENTITAS: jenisId,
+      JENIS_PENYEWA: jenisPenyewa, STATUS_PELANGGAN: statusPel, REFERRAL: referral,
+      FOTO_KTP: fotoKtp ? '[ada]' : '' };
     if (isOnline()) {
       showToast('🔄 Menyimpan ke database...');
-      const res = await apiPost('add_customer', { NAMA: nama, NO_WA: wa, NO_KTP: ktp, ALAMAT: alamat, CATATAN: catatan });
-      pel = { id: res.ID, nama: res.NAMA, wa: res.NO_WA, ktp: res.NO_KTP, alamat: res.ALAMAT, catatan: res.CATATAN, totalSewa: 0, totalNilai: 0 };
+      const res = await apiPost('add_customer', payload);
+      pel = { id: res.ID, nama: res.NAMA, wa: res.NO_WA, ktp: res.NO_KTP, alamat: res.ALAMAT,
+        kota: res.KOTA, jk: res.JENIS_KELAMIN, pekerjaan: res.PEKERJAAN, jenisId: res.JENIS_IDENTITAS,
+        jenisPenyewa: res.JENIS_PENYEWA, statusPel: res.STATUS_PELANGGAN, referral: res.REFERRAL,
+        catatan: res.CATATAN, fotoKtp: fotoKtp, totalSewa: 0, totalNilai: 0 };
     } else {
-      pel = { id: genId('P', DB.pelanggan), nama, wa, ktp, alamat, catatan, totalSewa: 0, totalNilai: 0 };
+      pel = { id: genId('P', DB.pelanggan), nama, wa, ktp, alamat, kota, jk, pekerjaan,
+        jenisId, jenisPenyewa, statusPel, referral, catatan, fotoKtp, totalSewa: 0, totalNilai: 0 };
     }
     DB.pelanggan.push(pel);
-    DB.aktivitas.unshift({ type: 'blue', teks: `Pelanggan baru: ${nama}`, waktu: 'Baru saja' });
-    ['p-nama','p-wa','p-ktp','p-alamat','p-catatan'].forEach(i => document.getElementById(i).value = '');
+    DB.aktivitas.unshift({ type: statusPel==='Blacklist'?'red':'blue', teks: `Pelanggan baru: ${nama}${statusPel==='Blacklist'?' ⚠️ BLACKLIST':''}`, waktu: 'Baru saja' });
+    ['p-nama','p-wa','p-ktp','p-alamat','p-catatan','p-pekerjaan','p-kota','p-referral'].forEach(i => { if(document.getElementById(i)) document.getElementById(i).value=''; });
+    // Reset foto preview
+    const img = document.getElementById('preview-ktp');
+    if (img) { img.style.display='none'; img.src=''; }
+    const box = document.getElementById('upload-ktp-box');
+    if (box) { box.classList.remove('has-photo'); const w=box.querySelector('div'); if(w) w.style.display=''; }
     closeModal('modal-tambah-pelanggan');
     showToast('✅ Pelanggan berhasil ditambahkan');
     if (currentPage === 'pelanggan') renderPelanggan();
@@ -1880,19 +2262,38 @@ async function tambahSewa() {
   const total = dur * m.harga;
   if (dp > total) { showToast('⚠️ DP tidak boleh melebihi total'); return; }
 
+  const deposit  = parseInt(document.getElementById('s-deposit').value) || 0;
+  const metode   = document.getElementById('s-metode').value;
+  const lokasi   = document.getElementById('s-lokasi').value.trim();
+  const jamKeluar = document.getElementById('s-jam-keluar').value;
+  const jamKembali = document.getElementById('s-jam-kembali').value;
+  const fotoMotor = await getBase64('upload-foto-motor');
+
   let sewa;
   try {
+    const payload = { PELANGGAN_ID: pelId, MOTOR_ID: motorId, TGL_MULAI: mulai, TGL_KEMBALI: kembali,
+      DP: dp, DEPOSIT: deposit, CATATAN: catatan, METODE_PEMBAYARAN: metode, LOKASI_ANTAR: lokasi,
+      JAM_KELUAR: jamKeluar, JAM_KEMBALI_EST: jamKembali, FOTO_MOTOR: fotoMotor ? '[ada]' : '' };
     if (isOnline()) {
       showToast('🔄 Menyimpan ke database...');
-      const res = await apiPost('add_rental', { PELANGGAN_ID: pelId, MOTOR_ID: motorId, TGL_MULAI: mulai, TGL_KEMBALI: kembali, DP: dp, CATATAN: catatan });
-      sewa = { id: res.ID, pelangganId: res.PELANGGAN_ID, motorId: res.MOTOR_ID, mulai: res.TGL_MULAI, kembali: res.TGL_KEMBALI, dp: Number(res.DP), total: Number(res.TOTAL), durasi: Number(res.DURASI), harga: Number(res.HARGA_PER_HARI), status: 'AKTIF', catatan: res.CATATAN };
+      const res = await apiPost('add_rental', payload);
+      sewa = { id: res.ID, pelangganId: res.PELANGGAN_ID, motorId: res.MOTOR_ID, mulai: res.TGL_MULAI,
+        kembali: res.TGL_KEMBALI, dp: Number(res.DP), total: Number(res.TOTAL), durasi: Number(res.DURASI),
+        harga: Number(res.HARGA_PER_HARI), deposit, metode, lokasi, jamKeluar, status: 'AKTIF',
+        catatan: res.CATATAN, fotoMotor };
     } else {
-      sewa = { id: genId('S', DB.sewa), pelangganId: pelId, motorId, mulai, kembali, dp, total, durasi: dur, harga: m.harga, status: 'AKTIF', catatan };
+      sewa = { id: genId('S', DB.sewa), pelangganId: pelId, motorId, mulai, kembali, dp, total,
+        durasi: dur, harga: m.harga, deposit, metode, lokasi, jamKeluar, status: 'AKTIF', catatan, fotoMotor };
     }
     DB.sewa.push(sewa);
     m.status = 'DISEWA';
     p.totalSewa += 1; p.totalNilai += total;
-    DB.aktivitas.unshift({ type: 'blue', teks: `${p.nama} menyewa ${m.merek} ${m.tipe} — ${dur} hari`, waktu: 'Baru saja' });
+    DB.aktivitas.unshift({ type: 'blue', teks: `${p.nama} menyewa ${m.nama||m.merek+' '+m.tipe} — ${dur} hari (${metode})`, waktu: 'Baru saja' });
+    // Reset foto
+    const fImg = document.getElementById('preview-foto-motor');
+    if (fImg) { fImg.style.display='none'; fImg.src=''; }
+    const fBox = document.getElementById('upload-foto-motor-box');
+    if (fBox) { fBox.classList.remove('has-photo'); const w=fBox.querySelector('div'); if(w) w.style.display=''; }
     closeModal('modal-tambah-sewa');
     showToast('✅ Transaksi sewa berhasil dibuat');
     updateStats(); renderDashboard();
@@ -1996,10 +2397,16 @@ function openDetailPelanggan(id) {
       </div>
     </div>
     <div class="info-list">
-      <div class="info-row"><span class="info-row-label">ID Pelanggan</span><span class="info-row-val">${p.id}</span></div>
-      <div class="info-row"><span class="info-row-label">KTP</span><span class="info-row-val">${p.ktp || '-'}</span></div>
+      <div class="info-row"><span class="info-row-label">ID</span><span class="info-row-val" style="font-size:11px">${p.id}</span></div>
+      ${p.jk?`<div class="info-row"><span class="info-row-label">Jenis Kelamin</span><span class="info-row-val">${p.jk}</span></div>`:''}
+      ${p.pekerjaan?`<div class="info-row"><span class="info-row-label">Pekerjaan</span><span class="info-row-val">${p.pekerjaan}</span></div>`:''}
+      ${p.kota?`<div class="info-row"><span class="info-row-label">Kota</span><span class="info-row-val">${p.kota}</span></div>`:''}
+      <div class="info-row"><span class="info-row-label">${p.jenisId||'KTP'}</span><span class="info-row-val">${p.ktp || '-'}</span></div>
       <div class="info-row"><span class="info-row-label">Alamat</span><span class="info-row-val">${p.alamat || '-'}</span></div>
-      <div class="info-row"><span class="info-row-label">Catatan</span><span class="info-row-val">${p.catatan || '-'}</span></div>
+      ${p.jenisPenyewa?`<div class="info-row"><span class="info-row-label">Jenis</span><span class="info-row-val">${p.jenisPenyewa}</span></div>`:''}
+      ${p.referral?`<div class="info-row"><span class="info-row-label">Referral</span><span class="info-row-val">${p.referral}</span></div>`:''}
+      ${p.catatan?`<div class="info-row"><span class="info-row-label">Catatan</span><span class="info-row-val">${p.catatan}</span></div>`:''}
+      ${p.fotoKtp?`<div class="info-row" style="align-items:flex-start"><span class="info-row-label">Foto KTP</span><span class="info-row-val"><img src="${p.fotoKtp}" style="width:100%;max-width:180px;border-radius:8px;object-fit:cover" onclick="this.style.maxWidth=this.style.maxWidth==='100%'?'180px':'100%'"></span></div>`:''}
     </div>
     <div style="padding:12px 16px;">
       <div style="font-size:12px;font-weight:700;color:var(--text-muted);margin-bottom:8px">RIWAYAT SEWA</div>
@@ -2086,7 +2493,12 @@ function openDetailSewa(id) {
     <div class="info-list">
       <div class="info-row"><span class="info-row-label">ID Transaksi</span><span class="info-row-val" style="font-size:11px">${s.id}</span></div>
       <div class="info-row"><span class="info-row-label">Harga/hari</span><span class="info-row-val">${rupiah(m?.harga || s.harga)}</span></div>
+      ${s.metode?`<div class="info-row"><span class="info-row-label">Metode Bayar</span><span class="info-row-val">${s.metode}</span></div>`:''}
+      ${s.deposit>0?`<div class="info-row"><span class="info-row-label">Deposit/Jaminan</span><span class="info-row-val">${rupiah(s.deposit)}</span></div>`:''}
+      ${s.jamKeluar?`<div class="info-row"><span class="info-row-label">Jam Keluar</span><span class="info-row-val">${s.jamKeluar}</span></div>`:''}
+      ${s.lokasi?`<div class="info-row"><span class="info-row-label">Lokasi Antar</span><span class="info-row-val">${s.lokasi}</span></div>`:''}
       ${s.catatan ? `<div class="info-row"><span class="info-row-label">Catatan</span><span class="info-row-val">${s.catatan}</span></div>` : ''}
+      ${s.fotoMotor?`<div class="info-row" style="align-items:flex-start"><span class="info-row-label">Foto Motor</span><span class="info-row-val"><img src="${s.fotoMotor}" style="width:100%;max-width:180px;border-radius:8px;object-fit:cover" onclick="this.style.maxWidth=this.style.maxWidth==='100%'?'180px':'100%'"></span></div>`:''}
     </div>
     ${perpHtml}
     ${s.status === 'AKTIF' ? `
@@ -2488,19 +2900,23 @@ function renderServis(q) {
   }
   el.innerHTML = data.map(s => {
     const m = DB.motors.find(x => x.id === s.motorId);
+    const statusBayarColor = s.statusBayar==='Hutang Vendor'?'var(--danger)':s.statusBayar==='Sudah Dibayar'?'var(--success)':'var(--warning)';
     return `<div class="rental-card">
       <div style="display:flex;justify-content:space-between;align-items:flex-start">
-        <div>
+        <div style="flex:1;min-width:0">
           <div style="font-size:14px;font-weight:700">${s.jenisServis}</div>
-          <div style="font-size:12px;color:var(--text-muted)">${m?.merek} ${m?.tipe} · ${m?.plat}</div>
-          <div style="font-size:12px;color:var(--text-muted);margin-top:2px">📅 ${formatDate(s.tanggal)} · ${s.km>0?s.km.toLocaleString('id-ID')+' km':''}</div>
+          <div style="font-size:12px;color:var(--text-muted)">${m?.nama||m?.merek+' '+m?.tipe} · ${m?.plat}</div>
+          <div style="font-size:12px;color:var(--text-muted);margin-top:2px">📅 ${formatDate(s.tanggal)}${s.km>0?' · '+s.km.toLocaleString('id-ID')+' km':''}${s.bengkel?' · 🔧 '+s.bengkel:''}</div>
+          ${s.detail?`<div style="font-size:12px;color:var(--text-secondary);margin-top:2px">${s.detail}</div>`:''}
         </div>
-        <div style="text-align:right">
+        <div style="text-align:right;flex-shrink:0;margin-left:8px">
           <div style="font-size:14px;font-weight:800;color:var(--danger)">${rupiah(s.biaya)}</div>
-          <div style="margin-top:4px">${badgeHtml(s.status==='PROSES'?'DISEWA':'TERSEDIA').replace('DISEWA','PROSES').replace('TERSEDIA','SELESAI')}</div>
+          ${s.statusBayar?`<div style="font-size:11px;font-weight:600;color:${statusBayarColor};margin-top:2px">${s.statusBayar}</div>`:''}
+          ${s.nota?`<div style="font-size:11px;color:var(--text-muted)">Nota: ${s.nota}</div>`:''}
         </div>
       </div>
-      ${s.catatan?`<div style="font-size:12px;color:var(--text-muted);margin-top:6px;padding-top:6px;border-top:1px solid var(--border)">${s.catatan}</div>`:''}
+      ${s.kmBerikutnya>0?`<div style="font-size:11px;color:var(--accent);margin-top:6px;padding-top:6px;border-top:1px solid var(--border)">🔔 Servis berikutnya: ${s.kmBerikutnya.toLocaleString('id-ID')} km</div>`:''}
+      ${s.catatan?`<div style="font-size:12px;color:var(--text-muted);margin-top:4px">${s.catatan}</div>`:''}
     </div>`;
   }).join('');
 }
@@ -2510,7 +2926,14 @@ async function simpanServis() {
   const tgl     = document.getElementById('svc-tgl').value;
   const km      = parseInt(document.getElementById('svc-km').value) || 0;
   const jenis   = document.getElementById('svc-jenis').value;
+  const detail  = document.getElementById('svc-detail').value.trim();
   const biaya   = parseInt(document.getElementById('svc-biaya').value) || 0;
+  const bengkel = document.getElementById('svc-bengkel').value.trim();
+  const hpBengkel = document.getElementById('svc-hpbengkel').value.trim();
+  const kmBerikutnya = parseInt(document.getElementById('svc-kmberikutnya').value) || 0;
+  const nota    = document.getElementById('svc-nota').value;
+  const statusBayar = document.getElementById('svc-statuspembayaran').value;
+  const jatuhTempo = document.getElementById('svc-jatuhtempo').value;
   const status  = document.getElementById('svc-status').value;
   const catatan = document.getElementById('svc-catatan').value.trim();
 
@@ -2519,11 +2942,18 @@ async function simpanServis() {
   const m = DB.motors.find(x => x.id === motorId);
   try {
     let svc;
+    const svcPayload = { MOTOR_ID: motorId, TANGGAL: tgl, KILOMETER: km, JENIS_SERVIS: jenis,
+      DETAIL_SERVIS: detail, BIAYA: biaya, BENGKEL: bengkel, HP_BENGKEL: hpBengkel,
+      KM_BERIKUTNYA: kmBerikutnya, ADA_NOTA: nota, STATUS_PEMBAYARAN: statusBayar,
+      TANGGAL_JATUH_TEMPO: jatuhTempo, STATUS: status, CATATAN: catatan };
     if (isOnline()) {
-      const res = await apiPost('add_service', { MOTOR_ID: motorId, TANGGAL: tgl, KILOMETER: km, JENIS_SERVIS: jenis, BIAYA: biaya, STATUS: status, CATATAN: catatan });
-      svc = { id: res.ID, motorId: res.MOTOR_ID, tanggal: res.TANGGAL, km: Number(res.KILOMETER), jenisServis: res.JENIS_SERVIS, biaya: Number(res.BIAYA), status: res.STATUS, catatan: res.CATATAN };
+      const res = await apiPost('add_service', svcPayload);
+      svc = { id: res.ID, motorId: res.MOTOR_ID, tanggal: res.TANGGAL, km: Number(res.KILOMETER),
+        jenisServis: res.JENIS_SERVIS, detail, biaya: Number(res.BIAYA), bengkel, hpBengkel,
+        kmBerikutnya, nota, statusBayar, status: res.STATUS, catatan: res.CATATAN };
     } else {
-      svc = { id: genId('SVC', DB.servis), motorId, tanggal: tgl, km, jenisServis: jenis, biaya, status, catatan };
+      svc = { id: genId('SVC', DB.servis), motorId, tanggal: tgl, km, jenisServis: jenis,
+        detail, biaya, bengkel, hpBengkel, kmBerikutnya, nota, statusBayar, status, catatan };
     }
     DB.servis.push(svc);
     // Update status motor lokal
@@ -2678,6 +3108,143 @@ function renderChart() {
     ctx.fillStyle = '#6B7280'; ctx.font = '10px sans-serif'; ctx.textAlign = 'center';
     ctx.fillText(dayNames[d.getDay()], x + barW/2, 160 - 8);
   });
+}
+
+// ====================== FOTO UPLOAD ======================
+function previewFoto(inputId, imgId, boxId) {
+  const file = document.getElementById(inputId).files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    const img  = document.getElementById(imgId);
+    const wrap = document.getElementById(inputId.replace('upload-','') + '-wrap') ||
+                 document.getElementById(imgId + '-wrap') ||
+                 document.querySelector(`#${boxId} div`);
+    img.src = e.target.result;
+    img.style.display = 'block';
+    if (wrap) wrap.style.display = 'none';
+    document.getElementById(boxId).classList.add('has-photo');
+  };
+  reader.readAsDataURL(file);
+}
+
+function getBase64(inputId) {
+  const file = document.getElementById(inputId)?.files[0];
+  if (!file) return Promise.resolve('');
+  return new Promise(res => {
+    const r = new FileReader();
+    r.onload = e => res(e.target.result);
+    r.readAsDataURL(file);
+  });
+}
+
+// ====================== PERIZINAN ======================
+DB.perizinan = [];
+let izinFilter = 'semua';
+
+function filterIzin(f, btn) {
+  izinFilter = f;
+  document.querySelectorAll('.izin-chip').forEach(c => c.classList.remove('active'));
+  btn.classList.add('active');
+  renderPerizinan();
+}
+
+function getIzinStatus(expired) {
+  if (!expired) return 'Aktif';
+  const today  = new Date(); today.setHours(0,0,0,0);
+  const expDate = new Date(expired); expDate.setHours(0,0,0,0);
+  const diffMs = expDate - today;
+  const diffDays = Math.ceil(diffMs / 86400000);
+  if (diffDays < 0)  return 'Expired';
+  if (diffDays <= 30) return 'Hampir Expired';
+  return 'Aktif';
+}
+
+function renderPerizinan() {
+  // Alert dokumen hampir expired / expired
+  const alerts = DB.perizinan.filter(i => getIzinStatus(i.expired) !== 'Aktif');
+  const alertEl = document.getElementById('perizinan-alert');
+  if (alerts.length > 0) {
+    alertEl.style.display = 'block';
+    alertEl.innerHTML = `⚠️ <strong>${alerts.length} dokumen</strong> perlu perhatian: ` +
+      alerts.map(i => `${i.nama} (${getIzinStatus(i.expired)})`).join(', ');
+  } else {
+    alertEl.style.display = 'none';
+  }
+
+  let data = DB.perizinan;
+  if (izinFilter !== 'semua') data = data.filter(i => getIzinStatus(i.expired) === izinFilter);
+
+  const el = document.getElementById('perizinan-list');
+  if (data.length === 0) {
+    el.innerHTML = `<div class="empty-state"><div class="empty-icon">📄</div><div class="empty-title">Belum ada dokumen</div><div class="empty-sub">Tambah dokumen perizinan usaha dengan tombol +</div></div>`;
+    return;
+  }
+
+  el.innerHTML = data.map(i => {
+    const status  = getIzinStatus(i.expired);
+    const cls     = status === 'Expired' ? 'izin-expired' : status === 'Hampir Expired' ? 'izin-hampir' : 'izin-aktif';
+    const statusColor = status === 'Expired' ? 'var(--danger)' : status === 'Hampir Expired' ? 'var(--warning)' : 'var(--success)';
+    const today   = new Date(); today.setHours(0,0,0,0);
+    const expDate = i.expired ? new Date(i.expired) : null;
+    const sisaHari = expDate ? Math.ceil((expDate - today) / 86400000) : null;
+    return `<div class="izin-card ${cls}">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start">
+        <div>
+          <div style="font-size:14px;font-weight:700">${i.nama}</div>
+          <div style="font-size:12px;color:var(--text-muted)">${i.jenis}${i.nomor?' · '+i.nomor:''}</div>
+          ${i.instansi?`<div style="font-size:12px;color:var(--text-muted)">${i.instansi}</div>`:''}
+        </div>
+        <div style="text-align:right">
+          <div style="font-size:12px;font-weight:700;color:${statusColor}">${status}</div>
+          ${sisaHari !== null ? `<div style="font-size:11px;color:var(--text-muted)">${sisaHari > 0 ? sisaHari+' hari lagi' : 'Sudah lewat'}</div>` : ''}
+        </div>
+      </div>
+      <div style="display:flex;gap:12px;margin-top:8px;font-size:12px;color:var(--text-muted)">
+        ${i.terbit?`<span>Terbit: ${formatDate(i.terbit)}</span>`:''}
+        ${i.expired?`<span>Expired: ${formatDate(i.expired)}</span>`:''}
+        ${i.biaya>0?`<span>Biaya: ${rupiah(i.biaya)}</span>`:''}
+      </div>
+      ${i.ket?`<div style="font-size:12px;color:var(--text-muted);margin-top:4px">${i.ket}</div>`:''}
+    </div>`;
+  }).join('');
+}
+
+function simpanIzin() {
+  const nama = document.getElementById('izin-nama').value.trim();
+  if (!nama) { showToast('⚠️ Nama dokumen wajib diisi'); return; }
+  const izin = {
+    id: genId('IZN', DB.perizinan),
+    nama,
+    jenis:     document.getElementById('izin-jenis').value,
+    nomor:     document.getElementById('izin-nomor').value.trim(),
+    terbit:    document.getElementById('izin-terbit').value,
+    expired:   document.getElementById('izin-expired').value,
+    instansi:  document.getElementById('izin-instansi').value.trim(),
+    biaya:     parseInt(document.getElementById('izin-biaya').value) || 0,
+    pic:       document.getElementById('izin-pic').value.trim(),
+    ket:       document.getElementById('izin-ket').value.trim(),
+  };
+  DB.perizinan.push(izin);
+  const status = getIzinStatus(izin.expired);
+  DB.aktivitas.unshift({ type: status === 'Expired' ? 'red' : 'blue', teks: `Dokumen ditambahkan: ${nama} (${status})`, waktu: 'Baru saja' });
+  ['izin-nama','izin-nomor','izin-terbit','izin-expired','izin-instansi','izin-biaya','izin-pic','izin-ket'].forEach(i => { if(document.getElementById(i)) document.getElementById(i).value = ''; });
+  closeModal('modal-tambah-izin');
+  showToast('✅ Dokumen berhasil ditambahkan');
+  renderPerizinan();
+  // Cek alert di dashboard
+  checkPerizinanAlert();
+}
+
+function checkPerizinanAlert() {
+  // Tampilkan notif di dashboard jika ada dokumen bermasalah
+  const alerts = DB.perizinan.filter(i => getIzinStatus(i.expired) !== 'Aktif');
+  if (alerts.length > 0) {
+    const act = document.getElementById('activity-list');
+    if (act && !act.innerHTML.includes('dokumen')) {
+      DB.aktivitas.unshift({ type: 'orange', teks: `${alerts.length} dokumen perizinan perlu diperbarui`, waktu: 'Peringatan' });
+    }
+  }
 }
 
 // ====================== AUTH SYSTEM ======================

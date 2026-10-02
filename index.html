@@ -526,7 +526,8 @@
 
   /* RESPONSIVE DESKTOP */
   @media (min-width: 768px) {
-    .bottom-nav, .fab { display: none; }
+    .bottom-nav { display: none; }
+    .fab { display: none; }
     .topbar { display: none; }
     .sidebar { display: flex; }
     .page { padding-bottom: 24px; }
@@ -1004,9 +1005,12 @@
 
     <!-- ===================== SERVIS ===================== -->
     <div id="page-servis" class="page">
-      <div class="page-header">
-        <div class="page-title">Servis</div>
-        <div class="page-sub">Riwayat perawatan armada</div>
+      <div class="page-header" style="display:flex;align-items:flex-start;justify-content:space-between">
+        <div>
+          <div class="page-title">Servis</div>
+          <div class="page-sub">Riwayat perawatan armada</div>
+        </div>
+        <button class="btn btn-primary btn-sm" style="margin-top:4px;flex:none" onclick="openModal('modal-tambah-servis');populateServisMotor()">+ Catat Servis</button>
       </div>
       <div class="search-bar">
         <div class="search-input">
@@ -1022,29 +1026,41 @@
 
     <!-- ===================== LAPORAN ===================== -->
     <div id="page-laporan" class="page">
-      <div class="page-header">
-        <div class="page-title">Laporan</div>
-        <div class="page-sub">Analitik bisnis rental</div>
+      <div class="page-header" style="display:flex;align-items:flex-start;justify-content:space-between">
+        <div>
+          <div class="page-title">Laporan</div>
+          <div class="page-sub" id="lap-periode-label">Analitik bisnis rental</div>
+        </div>
+        <button class="btn btn-secondary btn-sm" style="margin-top:4px;flex:none" onclick="downloadExcel()">⬇️ Excel</button>
       </div>
       <!-- Filter periode -->
       <div class="filter-chips">
-        <button class="chip active" onclick="filterLaporan('bulan',this)">Bulan Ini</button>
-        <button class="chip" onclick="filterLaporan('minggu',this)">Minggu Ini</button>
-        <button class="chip" onclick="filterLaporan('hari',this)">Hari Ini</button>
+        <button class="chip lap-chip active" onclick="filterLaporan('bulan',this)">Bulan Ini</button>
+        <button class="chip lap-chip" onclick="filterLaporan('minggu',this)">Minggu Ini</button>
+        <button class="chip lap-chip" onclick="filterLaporan('hari',this)">Hari Ini</button>
+        <button class="chip lap-chip" onclick="filterLaporan('semua',this)">Semua</button>
       </div>
       <!-- Ringkasan -->
       <div class="stat-grid" id="lap-stat-grid">
         <div class="stat-card accent"><div class="stat-label">Total Rental</div><div class="stat-value" id="lap-total-rental">-</div></div>
         <div class="stat-card success"><div class="stat-label">Pemasukan</div><div class="stat-value" id="lap-pemasukan" style="font-size:16px">-</div></div>
         <div class="stat-card warning"><div class="stat-label">Pengeluaran</div><div class="stat-value" id="lap-pengeluaran" style="font-size:16px">-</div></div>
-        <div class="stat-card orange"><div class="stat-label">Laba</div><div class="stat-value" id="lap-laba" style="font-size:16px">-</div></div>
+        <div class="stat-card orange"><div class="stat-label">Laba Bersih</div><div class="stat-value" id="lap-laba" style="font-size:16px">-</div></div>
       </div>
-      <!-- Grafik pemasukan sederhana -->
+      <!-- Grafik pemasukan -->
       <div class="section">
-        <div class="section-header"><div class="section-title">Tren Pemasukan</div></div>
+        <div class="section-header"><div class="section-title">Tren Pemasukan (7 Hari)</div></div>
         <div class="card" style="padding:16px 8px">
           <canvas id="chart-tren" height="160"></canvas>
         </div>
+      </div>
+      <!-- Mutasi Keuangan -->
+      <div class="section">
+        <div class="section-header">
+          <div class="section-title">Mutasi Keuangan</div>
+          <span id="lap-jml-transaksi" style="font-size:12px;color:var(--text-muted)"></span>
+        </div>
+        <div id="lap-mutasi-list"></div>
       </div>
       <!-- Top motor -->
       <div class="section">
@@ -1060,9 +1076,12 @@
 
     <!-- ===================== PERIZINAN ===================== -->
     <div id="page-perizinan" class="page">
-      <div class="page-header">
-        <div class="page-title">Perizinan Usaha</div>
-        <div class="page-sub">Dokumen & izin operasional</div>
+      <div class="page-header" style="display:flex;align-items:flex-start;justify-content:space-between">
+        <div>
+          <div class="page-title">Perizinan Usaha</div>
+          <div class="page-sub">Dokumen & izin operasional</div>
+        </div>
+        <button class="btn btn-primary btn-sm" style="margin-top:4px;flex:none" onclick="openModal('modal-tambah-izin')">+ Tambah Dokumen</button>
       </div>
       <!-- Alert dokumen akan expired -->
       <div id="perizinan-alert" style="display:none;margin:0 16px 12px;padding:12px;background:var(--warning-light);border-radius:var(--radius);border:1px solid var(--warning);font-size:13px;color:var(--warning)"></div>
@@ -1458,8 +1477,8 @@
           <input class="form-control" id="s-dp" type="number" placeholder="0" oninput="hitungDurasi()">
         </div>
         <div class="form-group">
-          <label class="form-label">Deposit / Jaminan</label>
-          <input class="form-control" id="s-deposit" type="number" placeholder="0">
+          <label class="form-label">Deposit / Jaminan <span style="color:var(--text-muted)">(opsional)</span></label>
+          <input class="form-control" id="s-deposit" type="text" placeholder="Contoh: KTP, KK, Rp100.000...">
         </div>
       </div>
       <div class="form-row">
@@ -1601,17 +1620,38 @@
         </select>
       </div>
       <div class="form-group">
-        <label class="form-label">Denda (Rp)</label>
+        <label class="form-label">Denda Keterlambatan (Rp)</label>
         <input class="form-control" id="kemb-denda" type="number" placeholder="0" oninput="hitungPelunasan()">
       </div>
+      <!-- Kalkulasi total tagihan -->
       <div id="kemb-kalkulasi" style="background:var(--surface-2);border-radius:var(--radius-sm);padding:12px;margin-bottom:14px;font-size:13px;"></div>
       <div class="form-group">
-        <label class="form-label">Pelunasan Diterima (Rp)</label>
-        <input class="form-control" id="kemb-pelunasan" type="number" placeholder="0">
+        <label class="form-label">Jumlah Bayar Saat Ini (Rp) *</label>
+        <input class="form-control" id="kemb-pelunasan" type="number" placeholder="0" oninput="hitungSisaHutang()">
+        <div style="font-size:11px;color:var(--text-muted);margin-top:4px">Masukkan jumlah yang dibayar pelanggan sekarang</div>
+      </div>
+      <!-- Status pembayaran -->
+      <div id="kemb-sisa-info" style="display:none;background:var(--warning-light);border-radius:var(--radius-sm);padding:10px;margin-bottom:10px;font-size:13px;color:var(--warning);font-weight:600;"></div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Status Pembayaran</label>
+          <select class="form-control" id="kemb-status-bayar" onchange="hitungSisaHutang()">
+            <option value="Lunas">Lunas</option>
+            <option value="Hutang">Hutang (bayar sebagian)</option>
+          </select>
+        </div>
+        <div class="form-group" id="kemb-metode-wrap">
+          <label class="form-label">Metode Bayar</label>
+          <select class="form-control" id="kemb-metode">
+            <option value="Cash">Cash</option>
+            <option value="Transfer">Transfer</option>
+            <option value="QRIS">QRIS</option>
+          </select>
+        </div>
       </div>
       <div class="form-group">
         <label class="form-label">Catatan</label>
-        <input class="form-control" id="kemb-catatan" placeholder="Kondisi tambahan, dll...">
+        <input class="form-control" id="kemb-catatan" placeholder="Kondisi tambahan, perjanjian hutang, dll...">
       </div>
       <div class="form-actions">
         <button class="btn btn-secondary" onclick="closeModal('modal-pengembalian')">Batal</button>
@@ -1774,30 +1814,37 @@
       <button class="modal-close" onclick="closeModal('modal-tambah-izin')">✕</button>
     </div>
     <div class="modal-body">
-      <div class="form-group">
-        <label class="form-label">Nama Dokumen *</label>
-        <input class="form-control" id="izin-nama" placeholder="STNK, Pajak Kendaraan, SIUP...">
-      </div>
       <div class="form-row">
         <div class="form-group">
-          <label class="form-label">Jenis Perizinan</label>
-          <select class="form-control" id="izin-jenis">
-            <option>NIB</option>
-            <option>NPWP</option>
-            <option>SIUP</option>
-            <option>TDP</option>
-            <option>STNK Kendaraan</option>
-            <option>Pajak Kendaraan</option>
-            <option>Asuransi Kendaraan</option>
-            <option>Izin Usaha Rental</option>
-            <option>Kontrak Kerjasama</option>
-            <option>Lainnya</option>
+          <label class="form-label">Jenis Perizinan *</label>
+          <select class="form-control" id="izin-jenis" onchange="toggleIzinMotor()">
+            <option value="NIB">NIB</option>
+            <option value="NPWP">NPWP</option>
+            <option value="SIUP">SIUP</option>
+            <option value="TDP">TDP</option>
+            <option value="STNK Kendaraan">STNK Kendaraan</option>
+            <option value="Pajak Kendaraan">Pajak Kendaraan</option>
+            <option value="Asuransi Kendaraan">Asuransi Kendaraan</option>
+            <option value="Izin Usaha Rental">Izin Usaha Rental</option>
+            <option value="Kontrak Kerjasama">Kontrak Kerjasama</option>
+            <option value="Lainnya">Lainnya</option>
           </select>
         </div>
         <div class="form-group">
-          <label class="form-label">Nomor Dokumen</label>
-          <input class="form-control" id="izin-nomor" placeholder="Nomor/kode dokumen">
+          <label class="form-label">Nama Dokumen *</label>
+          <input class="form-control" id="izin-nama" placeholder="Contoh: STNK Beat BN 1234">
         </div>
+      </div>
+      <!-- Motor terkait — muncul jika jenis berkaitan kendaraan -->
+      <div class="form-group" id="izin-motor-wrap" style="display:none">
+        <label class="form-label">Motor Terkait</label>
+        <select class="form-control" id="izin-motor">
+          <option value="">— Pilih Motor (opsional) —</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Nomor Dokumen</label>
+        <input class="form-control" id="izin-nomor" placeholder="Nomor STNK, NIK, dll">
       </div>
       <div class="form-row">
         <div class="form-group">
@@ -1871,6 +1918,19 @@ function genId(prefix, arr) {
   const n = (arr ? arr.length : 0) + 1;
   return code + '-' + String(n).padStart(3, '0');
 }
+// Konversi tanggal dari GAS (bisa berupa Date object atau string) ke YYYY-MM-DD lokal
+function fmtDateLocal(d) {
+  if (!d) return '';
+  if (typeof d === 'string' && d.match(/^\d{4}-\d{2}-\d{2}/)) return d.substring(0, 10);
+  const dt = new Date(d);
+  if (isNaN(dt)) return String(d).substring(0, 10);
+  // Gunakan lokal timezone agar tidak geser 1 hari
+  const y  = dt.getFullYear();
+  const m  = String(dt.getMonth()+1).padStart(2,'0');
+  const dd = String(dt.getDate()).padStart(2,'0');
+  return `${y}-${m}-${dd}`;
+}
+
 function avatarColor(name) {
   const colors = ['#2563EB','#16A34A','#D97706','#7C3AED','#EA580C','#DC2626','#0891B2'];
   let h = 0;
@@ -2180,7 +2240,7 @@ async function tambahPelanggan() {
     const payload = { NAMA: nama, NO_WA: wa, NO_KTP: ktp, ALAMAT: alamat, CATATAN: catatan,
       JENIS_KELAMIN: jk, PEKERJAAN: pekerjaan, KOTA: kota, JENIS_IDENTITAS: jenisId,
       JENIS_PENYEWA: jenisPenyewa, STATUS_PELANGGAN: statusPel, REFERRAL: referral,
-      FOTO_KTP: fotoKtp ? '[ada]' : '' };
+      FOTO_KTP: fotoKtp || '' };
     if (isOnline()) {
       showToast('🔄 Menyimpan ke database...');
       const res = await apiPost('add_customer', payload);
@@ -2273,7 +2333,7 @@ async function tambahSewa() {
   try {
     const payload = { PELANGGAN_ID: pelId, MOTOR_ID: motorId, TGL_MULAI: mulai, TGL_KEMBALI: kembali,
       DP: dp, DEPOSIT: deposit, CATATAN: catatan, METODE_PEMBAYARAN: metode, LOKASI_ANTAR: lokasi,
-      JAM_KELUAR: jamKeluar, JAM_KEMBALI_EST: jamKembali, FOTO_MOTOR: fotoMotor ? '[ada]' : '' };
+      JAM_KELUAR: jamKeluar, JAM_KEMBALI_EST: jamKembali, FOTO_MOTOR: fotoMotor || '' };
     if (isOnline()) {
       showToast('🔄 Menyimpan ke database...');
       const res = await apiPost('add_rental', payload);
@@ -2355,17 +2415,30 @@ function openDetailMotor(id) {
   openModal('modal-detail-motor');
 }
 
-function ubahStatusMotor(id) {
+async function ubahStatusMotor(id) {
   const m = DB.motors.find(x => x.id === id);
-  const statuses = ['TERSEDIA','SERVIS','RUSAK','TIDAK AKTIF'];
-  const available = statuses.filter(s => s !== m.status);
-  const next = available[0];
   if (m.status === 'DISEWA') { showToast('⚠️ Motor sedang disewa, tidak bisa diubah status'); return; }
-  m.status = next;
-  showToast(`✅ Status motor diubah ke ${next}`);
-  closeModal('modal-detail-motor');
-  updateStats();
-  if (currentPage === 'armada') renderMotor();
+  const pilihanStatus = m.status === 'TERSEDIA'
+    ? ['SERVIS','RUSAK','TIDAK AKTIF']
+    : ['TERSEDIA','SERVIS','RUSAK','TIDAK AKTIF'].filter(s => s !== m.status);
+  const pil = pilihanStatus.map((s,i) => `${i+1}. ${s}`).join('\n');
+  const input = prompt(`Pilih status baru untuk ${m.nama||m.merek+' '+m.tipe}:\n${pil}\n\nKetik nomor:`);
+  if (!input) return;
+  const idx = parseInt(input) - 1;
+  if (idx < 0 || idx >= pilihanStatus.length) { showToast('⚠️ Pilihan tidak valid'); return; }
+  const next = pilihanStatus[idx];
+  try {
+    if (isOnline()) {
+      await apiPost('update_motor', { ID: id, STATUS: next });
+    }
+    m.status = next;
+    DB.aktivitas.unshift({ type: 'orange', teks: `Status ${m.nama||m.plat} diubah ke ${next}`, waktu: 'Baru saja' });
+    showToast(`✅ Status motor diubah ke ${next}`);
+    closeModal('modal-detail-motor');
+    updateStats();
+    renderDashboard();
+    if (currentPage === 'armada') renderMotor();
+  } catch(e) { showToast('❌ ' + e.message); }
 }
 
 // ====================== DETAIL PELANGGAN ======================
@@ -2666,15 +2739,15 @@ function hitungDenda() {
   if (!s) return;
   const m = DB.motors.find(x => x.id === s.motorId);
   const tglAktual = document.getElementById('kemb-tgl').value;
-  const dendaEl = document.getElementById('kemb-denda-info');
-
+  const dendaEl   = document.getElementById('kemb-denda-info');
   if (!tglAktual) return;
   if (tglAktual > s.kembali) {
     const terlambat = diffDays(s.kembali, tglAktual);
-    const dendaPerHari = 50000; // default, bisa dari pengaturan
-    const denda = terlambat * dendaPerHari;
+    // Denda = terlambat × harga sewa harian
+    const harga = m?.harga || s.harga || 0;
+    const denda = terlambat * harga;
     dendaEl.style.display = 'block';
-    dendaEl.innerHTML = `⚠️ Terlambat ${terlambat} hari — Denda otomatis: ${rupiah(denda)}`;
+    dendaEl.innerHTML = `⚠️ Terlambat ${terlambat} hari × ${rupiah(harga)}/hari = Denda ${rupiah(denda)}`;
     document.getElementById('kemb-denda').value = denda;
   } else {
     dendaEl.style.display = 'none';
@@ -2686,16 +2759,49 @@ function hitungDenda() {
 function hitungPelunasan() {
   const s = _activeSewa;
   if (!s) return;
-  const denda = parseInt(document.getElementById('kemb-denda').value) || 0;
-  const sisaTagihan = s.total - s.dp;
-  const totalBayar = sisaTagihan + denda;
-  document.getElementById('kemb-pelunasan').value = totalBayar;
+  const denda       = parseInt(document.getElementById('kemb-denda').value) || 0;
+  // Sisa tagihan = total sewa - semua yang sudah dibayar sebelumnya (DP + perpanjangan)
+  const sudahBayar  = Number(s.dp || 0);
+  const sisaSewa    = Number(s.total || 0) - sudahBayar;
+  const totalTagihan = sisaSewa + denda;
+  // Auto-isi jumlah bayar dengan total tagihan
+  document.getElementById('kemb-pelunasan').value = totalTagihan;
+  document.getElementById('kemb-status-bayar').value = 'Lunas';
   document.getElementById('kemb-kalkulasi').innerHTML = `
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
-      <div style="color:var(--text-secondary)">Sisa sewa</div><div style="font-weight:700">${rupiah(sisaTagihan)}</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:13px">
+      <div style="color:var(--text-secondary)">Total sewa</div><div style="font-weight:700">${rupiah(s.total)}</div>
+      <div style="color:var(--text-secondary)">Sudah dibayar (DP)</div><div style="font-weight:700;color:var(--success)">-${rupiah(sudahBayar)}</div>
+      <div style="color:var(--text-secondary)">Sisa sewa</div><div style="font-weight:700">${rupiah(sisaSewa)}</div>
       <div style="color:var(--text-secondary)">Denda</div><div style="font-weight:700;color:var(--danger)">${rupiah(denda)}</div>
-      <div style="color:var(--text-secondary)">Total harus bayar</div><div style="font-weight:800;color:var(--accent)">${rupiah(totalBayar)}</div>
+      <div style="color:var(--text-secondary);font-weight:700">Total harus bayar</div><div style="font-weight:800;color:var(--accent)">${rupiah(totalTagihan)}</div>
     </div>`;
+  hitungSisaHutang();
+}
+
+function hitungSisaHutang() {
+  const s = _activeSewa;
+  if (!s) return;
+  const denda       = parseInt(document.getElementById('kemb-denda').value) || 0;
+  const sudahBayar  = Number(s.dp || 0);
+  const sisaSewa    = Number(s.total || 0) - sudahBayar;
+  const totalTagihan = sisaSewa + denda;
+  const bayarSekarang = parseInt(document.getElementById('kemb-pelunasan').value) || 0;
+  const sisaHutang  = totalTagihan - bayarSekarang;
+  const infoEl = document.getElementById('kemb-sisa-info');
+  if (sisaHutang > 0) {
+    infoEl.style.display = 'block';
+    infoEl.innerHTML = `💳 Sisa hutang: <strong>${rupiah(sisaHutang)}</strong> — pastikan pilih status "Hutang"`;
+    document.getElementById('kemb-status-bayar').value = 'Hutang';
+  } else if (sisaHutang < 0) {
+    infoEl.style.display = 'block';
+    infoEl.style.background = 'var(--success-light)';
+    infoEl.style.color = 'var(--success)';
+    infoEl.innerHTML = `✅ Kembalian: <strong>${rupiah(Math.abs(sisaHutang))}</strong>`;
+    document.getElementById('kemb-status-bayar').value = 'Lunas';
+  } else {
+    infoEl.style.display = 'none';
+    document.getElementById('kemb-status-bayar').value = 'Lunas';
+  }
 }
 
 async function simpanPengembalian() {
@@ -2703,15 +2809,25 @@ async function simpanPengembalian() {
   if (!s) return;
   const m = DB.motors.find(x => x.id === s.motorId);
   const p = DB.pelanggan.find(x => x.id === s.pelangganId);
-  const tglAktual = document.getElementById('kemb-tgl').value;
-  const km = parseInt(document.getElementById('kemb-km').value) || 0;
-  const kondisi = document.getElementById('kemb-kondisi').value;
-  const denda = parseInt(document.getElementById('kemb-denda').value) || 0;
-  const pelunasan = parseInt(document.getElementById('kemb-pelunasan').value) || 0;
-  const catatan = document.getElementById('kemb-catatan').value.trim();
+  const tglAktual   = document.getElementById('kemb-tgl').value;
+  const km          = parseInt(document.getElementById('kemb-km').value) || 0;
+  const kondisi     = document.getElementById('kemb-kondisi').value;
+  const denda       = parseInt(document.getElementById('kemb-denda').value) || 0;
+  const pelunasan   = parseInt(document.getElementById('kemb-pelunasan').value) || 0;
+  const statusBayar = document.getElementById('kemb-status-bayar').value;
+  const metode      = document.getElementById('kemb-metode').value;
+  const catatan     = document.getElementById('kemb-catatan').value.trim();
+  const sudahBayar  = Number(s.dp || 0);
+  const sisaSewa    = Number(s.total || 0) - sudahBayar;
+  const totalTagihan = sisaSewa + denda;
+  const sisaHutang  = totalTagihan - pelunasan;
 
   if (!tglAktual) { showToast('⚠️ Tanggal kembali wajib diisi'); return; }
-  if (!confirm(`Konfirmasi pengembalian motor ${m?.merek} ${m?.tipe} dari ${p?.nama}?\n\nPelunasan: ${rupiah(pelunasan)}\nDenda: ${rupiah(denda)}`)) return;
+  const konfirmMsg = `Konfirmasi pengembalian motor dari ${p?.nama}?
+Total tagihan: ${rupiah(totalTagihan)}
+Bayar sekarang: ${rupiah(pelunasan)}
+${sisaHutang > 0 ? `Sisa hutang: ${rupiah(sisaHutang)}` : 'Status: LUNAS'}`;
+  if (!confirm(konfirmMsg)) return;
 
   try {
     if (isOnline()) {
@@ -2722,14 +2838,20 @@ async function simpanPengembalian() {
         KONDISI: kondisi,
         DENDA: denda,
         PELUNASAN: pelunasan,
-        CATATAN: catatan,
+        STATUS_PEMBAYARAN: statusBayar,
+        SISA_HUTANG: sisaHutang > 0 ? sisaHutang : 0,
+        METODE_PEMBAYARAN: metode,
+        CATATAN: catatan + (sisaHutang > 0 ? ` | Hutang: ${rupiah(sisaHutang)}` : ''),
       });
     }
     // Update lokal
     s.status = 'SELESAI';
     s.tglAktual = tglAktual;
+    s.statusBayar = statusBayar;
+    s.sisaHutang = sisaHutang > 0 ? sisaHutang : 0;
     if (m) { m.status = 'TERSEDIA'; if (km > 0) m.km = km; }
-    DB.aktivitas.unshift({ type: 'green', teks: `${p?.nama} mengembalikan ${m?.merek} ${m?.tipe} (${m?.plat}) — ${kondisi}`, waktu: 'Baru saja' });
+    const keteranganAktivitas = `${p?.nama} mengembalikan ${m?.merek} ${m?.tipe} — ${kondisi}${sisaHutang > 0 ? ` | Hutang ${rupiah(sisaHutang)}` : ' | Lunas'}`;
+    DB.aktivitas.unshift({ type: sisaHutang > 0 ? 'orange' : 'green', teks: keteranganAktivitas, waktu: 'Baru saja' });
 
     closeModal('modal-pengembalian');
     showToast('✅ Motor berhasil dikembalikan');
@@ -2976,7 +3098,7 @@ let lapPeriode = 'bulan';
 
 function filterLaporan(p, btn) {
   lapPeriode = p;
-  document.querySelectorAll('#page-laporan .filter-chips .chip').forEach(c => c.classList.remove('active'));
+  document.querySelectorAll('.lap-chip').forEach(c => c.classList.remove('active'));
   btn.classList.add('active');
   renderLaporan();
 }
@@ -2984,7 +3106,14 @@ function filterLaporan(p, btn) {
 function renderLaporan() {
   const { dari, sampai } = getPeriodRange(lapPeriode);
 
-  // Sewa di periode ini
+  // Label periode
+  const labelEl = document.getElementById('lap-periode-label');
+  if (labelEl) {
+    if (!dari) labelEl.textContent = 'Semua data';
+    else labelEl.textContent = `${formatDate(dari)} — ${formatDate(sampai)}`;
+  }
+
+  // Semua keuangan di periode (bukan hanya dari sewa)
   const sewas = DB.sewa.filter(s => !dari || (s.mulai >= dari && s.mulai <= sampai));
   const fins  = DB.keuangan.filter(f => !dari || (f.tanggal >= dari && f.tanggal <= sampai));
 
@@ -2995,6 +3124,56 @@ function renderLaporan() {
   document.getElementById('lap-pemasukan').textContent    = rupiahSingkat(masuk);
   document.getElementById('lap-pengeluaran').textContent  = rupiahSingkat(keluar);
   document.getElementById('lap-laba').textContent         = rupiahSingkat(masuk - keluar);
+
+  // Mutasi keuangan per baris (diurutkan tanggal)
+  const mutasiEl = document.getElementById('lap-mutasi-list');
+  const jmlEl = document.getElementById('lap-jml-transaksi');
+  if (jmlEl) jmlEl.textContent = `${fins.length} transaksi`;
+  const finsSorted = [...fins].sort((a,b) => (a.tanggal||'').localeCompare(b.tanggal||''));
+  if (mutasiEl) {
+    if (finsSorted.length === 0) {
+      mutasiEl.innerHTML = `<div style="font-size:13px;color:var(--text-muted);padding:12px 0">Belum ada transaksi keuangan di periode ini.</div>`;
+    } else {
+      let saldo = 0;
+      mutasiEl.innerHTML = `
+        <div style="overflow-x:auto">
+          <table style="width:100%;border-collapse:collapse;font-size:12px">
+            <thead>
+              <tr style="background:var(--surface-2);text-align:left">
+                <th style="padding:8px 6px;border-bottom:2px solid var(--border);white-space:nowrap">Tanggal</th>
+                <th style="padding:8px 6px;border-bottom:2px solid var(--border)">Keterangan</th>
+                <th style="padding:8px 6px;border-bottom:2px solid var(--border);text-align:right;white-space:nowrap">Masuk</th>
+                <th style="padding:8px 6px;border-bottom:2px solid var(--border);text-align:right;white-space:nowrap">Keluar</th>
+                <th style="padding:8px 6px;border-bottom:2px solid var(--border);text-align:right;white-space:nowrap">Saldo</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${finsSorted.map(f => {
+                const masukVal  = f.jenis === 'PEMASUKAN'   ? Number(f.nominal||0) : 0;
+                const keluarVal = f.jenis === 'PENGELUARAN' ? Number(f.nominal||0) : 0;
+                saldo += masukVal - keluarVal;
+                return `<tr style="border-bottom:1px solid var(--border)">
+                  <td style="padding:7px 6px;white-space:nowrap;color:var(--text-muted)">${formatDate(f.tanggal)}</td>
+                  <td style="padding:7px 6px">
+                    <div style="font-weight:600">${f.kategori}</div>
+                    <div style="color:var(--text-muted);font-size:11px">${f.keterangan||''}</div>
+                  </td>
+                  <td style="padding:7px 6px;text-align:right;color:var(--success);font-weight:600">${masukVal>0?rupiah(masukVal):''}</td>
+                  <td style="padding:7px 6px;text-align:right;color:var(--danger);font-weight:600">${keluarVal>0?rupiah(keluarVal):''}</td>
+                  <td style="padding:7px 6px;text-align:right;font-weight:700;color:${saldo>=0?'var(--accent)':'var(--danger)'}">${rupiah(saldo)}</td>
+                </tr>`;
+              }).join('')}
+              <tr style="background:var(--surface-2);font-weight:800">
+                <td colspan="2" style="padding:8px 6px">TOTAL</td>
+                <td style="padding:8px 6px;text-align:right;color:var(--success)">${rupiah(masuk)}</td>
+                <td style="padding:8px 6px;text-align:right;color:var(--danger)">${rupiah(keluar)}</td>
+                <td style="padding:8px 6px;text-align:right;color:${masuk-keluar>=0?'var(--accent)':'var(--danger)'}">${rupiah(masuk-keluar)}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>`;
+    }
+  }
 
   // Top motor
   const perMotor = DB.motors.map(m => {
@@ -3194,6 +3373,7 @@ function renderPerizinan() {
           <div style="font-size:14px;font-weight:700">${i.nama}</div>
           <div style="font-size:12px;color:var(--text-muted)">${i.jenis}${i.nomor?' · '+i.nomor:''}</div>
           ${i.instansi?`<div style="font-size:12px;color:var(--text-muted)">${i.instansi}</div>`:''}
+          ${i.motorPlat?`<div style="font-size:12px;color:var(--accent);font-weight:600">🏍 ${i.motorNama||''} · ${i.motorPlat}</div>`:''}
         </div>
         <div style="text-align:right">
           <div style="font-size:12px;font-weight:700;color:${statusColor}">${status}</div>
@@ -3245,6 +3425,109 @@ function checkPerizinanAlert() {
       DB.aktivitas.unshift({ type: 'orange', teks: `${alerts.length} dokumen perizinan perlu diperbarui`, waktu: 'Peringatan' });
     }
   }
+}
+
+// ====================== DOWNLOAD EXCEL ======================
+function downloadExcel() {
+  const { dari, sampai } = getPeriodRange(lapPeriode);
+  const fins = DB.keuangan
+    .filter(f => !dari || (f.tanggal >= dari && f.tanggal <= sampai))
+    .sort((a,b) => (a.tanggal||'').localeCompare(b.tanggal||''));
+
+  if (fins.length === 0) { showToast('⚠️ Tidak ada data di periode ini'); return; }
+
+  let saldo = 0;
+  const rows = [
+    ['DNS Rental Motor — Laporan Keuangan'],
+    [`Periode: ${dari ? formatDate(dari)+' s/d '+formatDate(sampai) : 'Semua'}`],
+    [''],
+    ['Tanggal','Kategori','Keterangan','Pemasukan (Rp)','Pengeluaran (Rp)','Saldo (Rp)'],
+    ...fins.map(f => {
+      const masukVal  = f.jenis === 'PEMASUKAN'   ? Number(f.nominal||0) : 0;
+      const keluarVal = f.jenis === 'PENGELUARAN' ? Number(f.nominal||0) : 0;
+      saldo += masukVal - keluarVal;
+      return [f.tanggal, f.kategori, f.keterangan||'', masukVal||'', keluarVal||'', saldo];
+    }),
+    [''],
+    ['TOTAL',
+      '',
+      '',
+      fins.filter(f=>f.jenis==='PEMASUKAN').reduce((a,f)=>a+Number(f.nominal||0),0),
+      fins.filter(f=>f.jenis==='PENGELUARAN').reduce((a,f)=>a+Number(f.nominal||0),0),
+      saldo
+    ],
+  ];
+
+  // Buat CSV
+  const csv = rows.map(r => r.map(v => `"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');
+  // Tambah BOM untuk Excel agar bisa baca UTF-8
+  const bom  = '\uFEFF';
+  const blob = new Blob([bom + csv], { type: 'text/csv;charset=utf-8;' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  const fname = `DNS_Rental_Laporan_${dari||'semua'}_${sampai||''}.csv`;
+  a.href = url; a.download = fname; a.click();
+  URL.revokeObjectURL(url);
+  showToast('✅ File Excel berhasil diunduh');
+}
+
+// ====================== PERIZINAN — MOTOR TERKAIT ======================
+function toggleIzinMotor() {
+  const jenis = document.getElementById('izin-jenis').value;
+  const kendaraanJenis = ['STNK Kendaraan','Pajak Kendaraan','Asuransi Kendaraan'];
+  const wrap = document.getElementById('izin-motor-wrap');
+  if (!wrap) return;
+  if (kendaraanJenis.includes(jenis)) {
+    wrap.style.display = 'block';
+    const sel = document.getElementById('izin-motor');
+    sel.innerHTML = '<option value="">— Pilih Motor (opsional) —</option>' +
+      DB.motors.map(m => `<option value="${m.id}">${m.nama||m.merek+' '+m.tipe} · ${m.plat}</option>`).join('');
+  } else {
+    wrap.style.display = 'none';
+  }
+}
+
+// Override simpanIzin untuk kirim ke backend + tambah motorId
+const _simpanIzinOld = simpanIzin;
+function simpanIzin() {
+  const nama = document.getElementById('izin-nama').value.trim();
+  if (!nama) { showToast('⚠️ Nama dokumen wajib diisi'); return; }
+  const motorId = document.getElementById('izin-motor')?.value || '';
+  const motor   = motorId ? DB.motors.find(x => x.id === motorId) : null;
+  const izin = {
+    id:        genId('IZN', DB.perizinan),
+    nama,
+    jenis:     document.getElementById('izin-jenis').value,
+    nomor:     document.getElementById('izin-nomor').value.trim(),
+    terbit:    document.getElementById('izin-terbit').value,
+    expired:   document.getElementById('izin-expired').value,
+    instansi:  document.getElementById('izin-instansi').value.trim(),
+    biaya:     parseInt(document.getElementById('izin-biaya').value) || 0,
+    pic:       document.getElementById('izin-pic').value.trim(),
+    ket:       document.getElementById('izin-ket').value.trim(),
+    motorId,
+    motorPlat: motor?.plat || '',
+    motorNama: motor?.nama || (motor ? motor.merek+' '+motor.tipe : ''),
+  };
+
+  // Kirim ke backend
+  if (isOnline()) {
+    apiPost('add_perizinan', {
+      NAMA_DOKUMEN: izin.nama, JENIS: izin.jenis, NOMOR_DOKUMEN: izin.nomor,
+      TANGGAL_TERBIT: izin.terbit, TANGGAL_EXPIRED: izin.expired,
+      INSTANSI: izin.instansi, BIAYA: izin.biaya, PIC: izin.pic,
+      KETERANGAN: izin.ket + (izin.motorPlat ? ' | Motor: '+izin.motorPlat : ''),
+    }).catch(e => showToast('⚠️ Gagal simpan ke server: ' + e.message));
+  }
+
+  DB.perizinan.push(izin);
+  const status = getIzinStatus(izin.expired);
+  DB.aktivitas.unshift({ type: status === 'Expired' ? 'red' : 'blue', teks: `Dokumen: ${nama}${izin.motorPlat?' ('+izin.motorPlat+')':''} — ${status}`, waktu: 'Baru saja' });
+  ['izin-nama','izin-nomor','izin-terbit','izin-expired','izin-instansi','izin-biaya','izin-pic','izin-ket'].forEach(i => { if(document.getElementById(i)) document.getElementById(i).value = ''; });
+  closeModal('modal-tambah-izin');
+  showToast('✅ Dokumen berhasil ditambahkan');
+  renderPerizinan();
+  checkPerizinanAlert();
 }
 
 // ====================== AUTH SYSTEM ======================
@@ -3511,27 +3794,36 @@ async function loadFromBackend() {
       apiGet('finance'),
     ]);
 
-    // Normalisasi motors ke format lokal
+    // Normalisasi motors ke format lokal (lengkap)
     DB.motors = motors.map(m => ({
-      id: m.ID, plat: m.NOMOR_POLISI, merek: m.MEREK, tipe: m.TIPE,
-      tahun: m.TAHUN, harga: Number(m.HARGA_SEWA), km: Number(m.KILOMETER),
-      status: m.STATUS, catatan: m.CATATAN,
+      id: m.ID, plat: m.NOMOR_POLISI, nama: m.NAMA_SEBUTAN||'',
+      merek: m.MEREK, tipe: m.TIPE, tahun: m.TAHUN,
+      harga: Number(m.HARGA_SEWA), km: Number(m.KILOMETER),
+      warna: m.WARNA||'', statusPajak: m.STATUS_PAJAK||'Aktif',
+      kepemilikan: m.KEPEMILIKAN||'', status: m.STATUS, catatan: m.CATATAN,
     }));
 
-    // Normalisasi pelanggan
+    // Normalisasi pelanggan (lengkap)
     DB.pelanggan = pelanggan.map(p => ({
       id: p.ID, nama: p.NAMA, wa: p.NO_WA, ktp: p.NO_KTP,
-      alamat: p.ALAMAT, catatan: p.CATATAN,
+      alamat: p.ALAMAT, kota: p.KOTA||'', jk: p.JENIS_KELAMIN||'',
+      pekerjaan: p.PEKERJAAN||'', jenisId: p.JENIS_IDENTITAS||'KTP',
+      jenisPenyewa: p.JENIS_PENYEWA||'Individu',
+      statusPel: p.STATUS_PELANGGAN||'Baik', referral: p.REFERRAL||'',
+      catatan: p.CATATAN, fotoKtp: p.FOTO_KTP||'',
       totalSewa: Number(p.TOTAL_SEWA||0), totalNilai: Number(p.TOTAL_NILAI||0),
     }));
 
-    // Normalisasi sewa
+    // Normalisasi sewa (lengkap)
     DB.sewa = sewas.map(s => ({
       id: s.ID, pelangganId: s.PELANGGAN_ID, motorId: s.MOTOR_ID,
-      mulai: s.TGL_MULAI, kembali: s.TGL_KEMBALI, tglAktual: s.TGL_KEMBALI_AKTUAL,
+      mulai: fmtDateLocal(s.TGL_MULAI), kembali: fmtDateLocal(s.TGL_KEMBALI),
+      tglAktual: s.TGL_KEMBALI_AKTUAL||'',
       harga: Number(s.HARGA_PER_HARI), durasi: Number(s.DURASI),
-      dp: Number(s.DP), total: Number(s.TOTAL), sisa: Number(s.SISA),
-      status: s.STATUS, catatan: s.CATATAN,
+      dp: Number(s.DP), deposit: s.DEPOSIT||'', total: Number(s.TOTAL),
+      sisa: Number(s.SISA), metode: s.METODE_PEMBAYARAN||'',
+      lokasi: s.LOKASI_ANTAR||'', jamKeluar: s.JAM_KELUAR||'',
+      fotoMotor: s.FOTO_MOTOR||'', status: s.STATUS, catatan: s.CATATAN,
     }));
 
     // Update stats dari dashboard
@@ -3540,11 +3832,20 @@ async function loadFromBackend() {
     document.getElementById('st-disewa').textContent   = dash.armada.disewa;
     document.getElementById('st-servis').textContent   = dash.armada.servis;
 
-    // Normalisasi keuangan
+    // Update finance strip dashboard
+    if (dash.keuangan) {
+      document.getElementById('fin-income').textContent  = rupiahSingkat(dash.keuangan.pemasukan||0);
+      document.getElementById('fin-expense').textContent = rupiahSingkat(dash.keuangan.pengeluaran||0);
+      document.getElementById('fin-profit').textContent  = rupiahSingkat(dash.keuangan.laba||0);
+    }
+
+    // Normalisasi keuangan — fix tanggal dari Date object ke string YYYY-MM-DD
     if (finData && finData.data) {
       DB.keuangan = finData.data.map(f => ({
         id: f.ID, jenis: f.JENIS, kategori: f.KATEGORI,
-        tanggal: f.TANGGAL, nominal: Number(f.NOMINAL||0),
+        tanggal: fmtDateLocal(f.TANGGAL),
+        nominal: Number(f.NOMINAL||0),
+        metode: f.METODE_PEMBAYARAN||'',
         keterangan: f.KETERANGAN, refId: f.REF_ID,
       }));
     }

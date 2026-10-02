@@ -4,6 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>DNS Rental Motor</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
   :root {
     --bg: #F7F8FA;
@@ -38,7 +41,7 @@
 
   * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
 
-  html, body { height: 100%; background: var(--bg); color: var(--text-primary); font-family: 'Inter', system-ui, -apple-system, sans-serif; }
+  html, body { height: 100%; background: var(--bg); color: var(--text-primary); font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif; }
 
   /* LAYOUT */
   .app { display: flex; height: 100%; }
@@ -610,6 +613,43 @@
     display: flex; align-items: center; justify-content: center; gap: 6px;
   }
   .btn-logout:hover { background: var(--danger); color: #fff; }
+
+  /* Reload bar */
+  .reload-bar {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 6px 16px;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    font-size: 11px; color: var(--text-muted);
+    gap: 8px;
+  }
+  .reload-bar .sync-info { display: flex; align-items: center; gap: 5px; flex: 1; }
+  .reload-bar .sync-dot {
+    width: 7px; height: 7px; border-radius: 50%;
+    background: var(--success); flex-shrink: 0;
+  }
+  .reload-bar .sync-dot.loading {
+    background: var(--warning);
+    animation: pulse 1s infinite;
+  }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.3} }
+  .reload-bar .countdown { font-weight: 600; color: var(--text-secondary); }
+  .btn-reload {
+    padding: 4px 10px; border-radius: 99px;
+    border: 1.5px solid var(--border);
+    background: none; font-size: 11px; font-weight: 600;
+    color: var(--accent); cursor: pointer;
+    display: flex; align-items: center; gap: 4px;
+    white-space: nowrap; font-family: inherit;
+    transition: all .15s;
+  }
+  .btn-reload:hover { background: var(--accent-light); border-color: var(--accent); }
+  .btn-reload.spinning .reload-icon { display: inline-block; animation: spin .6s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  @media (min-width: 768px) {
+    .reload-bar { padding: 6px 24px; }
+  }
 </style>
 </head>
 <body>
@@ -701,10 +741,22 @@
         <span>DNS Rental Motor</span>
       </div>
       <div class="topbar-right">
-        <button class="topbar-btn" onclick="showToast('🔔 Tidak ada notifikasi baru')">🔔</button>
+        <button class="topbar-btn" onclick="manualReload()" title="Reload data" id="btn-topbar-reload">🔄</button>
         <button class="topbar-btn" onclick="showPage('pengaturan')" title="Pengaturan">⚙️</button>
         <button class="topbar-btn" onclick="doLogout()" title="Keluar" style="color:var(--danger)">🚪</button>
       </div>
+    </div>
+
+    <!-- Reload Bar -->
+    <div class="reload-bar" id="reload-bar">
+      <div class="sync-info">
+        <div class="sync-dot" id="sync-dot"></div>
+        <span id="sync-label">Memuat data...</span>
+      </div>
+      <span class="countdown" id="reload-countdown"></span>
+      <button class="btn-reload" id="btn-reload" onclick="manualReload()">
+        <span class="reload-icon">↻</span> Reload
+      </button>
     </div>
 
     <!-- ===================== DASHBOARD ===================== -->
@@ -718,17 +770,17 @@
       <div class="finance-strip">
         <div class="fin-item">
           <div class="fin-label">Pendapatan</div>
-          <div class="fin-val" id="fin-income">Rp12,5jt</div>
+          <div class="fin-val" id="fin-income">Rp0</div>
         </div>
         <div class="fin-divider"></div>
         <div class="fin-item">
           <div class="fin-label">Pengeluaran</div>
-          <div class="fin-val" id="fin-expense">Rp3,2jt</div>
+          <div class="fin-val" id="fin-expense">Rp0</div>
         </div>
         <div class="fin-divider"></div>
         <div class="fin-item">
           <div class="fin-label">Laba</div>
-          <div class="fin-val" id="fin-profit">Rp9,3jt</div>
+          <div class="fin-val" id="fin-profit">Rp0</div>
         </div>
       </div>
 
@@ -736,22 +788,22 @@
       <div class="stat-grid">
         <div class="stat-card accent">
           <div class="stat-label">Total Armada</div>
-          <div class="stat-value" id="st-total">8</div>
+          <div class="stat-value" id="st-total">0</div>
           <div class="stat-sub">unit motor</div>
         </div>
         <div class="stat-card success">
           <div class="stat-label">Tersedia</div>
-          <div class="stat-value" id="st-tersedia">3</div>
+          <div class="stat-value" id="st-tersedia">0</div>
           <div class="stat-sub">siap disewa</div>
         </div>
         <div class="stat-card warning">
           <div class="stat-label">Sedang Disewa</div>
-          <div class="stat-value" id="st-disewa">4</div>
+          <div class="stat-value" id="st-disewa">0</div>
           <div class="stat-sub">aktif</div>
         </div>
         <div class="stat-card orange">
           <div class="stat-label">Servis</div>
-          <div class="stat-value" id="st-servis">1</div>
+          <div class="stat-value" id="st-servis">0</div>
           <div class="stat-sub">dalam perawatan</div>
         </div>
       </div>
@@ -893,16 +945,16 @@
       </div>
       <!-- Filter periode -->
       <div class="filter-chips">
-        <button class="chip active" onclick="filterFinPeriode('bulan',this)">Bulan Ini</button>
-        <button class="chip" onclick="filterFinPeriode('minggu',this)">Minggu Ini</button>
-        <button class="chip" onclick="filterFinPeriode('hari',this)">Hari Ini</button>
-        <button class="chip" onclick="filterFinPeriode('semua',this)">Semua</button>
+        <button class="chip fin-chip-periode active" onclick="filterFinPeriode('bulan',this)">Bulan Ini</button>
+        <button class="chip fin-chip-periode" onclick="filterFinPeriode('minggu',this)">Minggu Ini</button>
+        <button class="chip fin-chip-periode" onclick="filterFinPeriode('hari',this)">Hari Ini</button>
+        <button class="chip fin-chip-periode" onclick="filterFinPeriode('semua',this)">Semua</button>
       </div>
       <!-- Filter jenis -->
       <div class="filter-chips" style="padding-top:0">
-        <button class="chip active" onclick="filterFinJenis('semua',this)" id="fin-chip-semua">Semua</button>
-        <button class="chip" onclick="filterFinJenis('PEMASUKAN',this)">Pemasukan</button>
-        <button class="chip" onclick="filterFinJenis('PENGELUARAN',this)">Pengeluaran</button>
+        <button class="chip fin-chip-jenis active" onclick="filterFinJenis('semua',this)">Semua</button>
+        <button class="chip fin-chip-jenis" onclick="filterFinJenis('PEMASUKAN',this)">Pemasukan</button>
+        <button class="chip fin-chip-jenis" onclick="filterFinJenis('PENGELUARAN',this)">Pengeluaran</button>
       </div>
       <div class="section">
         <div id="fin-list"></div>
@@ -1454,41 +1506,15 @@
 </div>
 
 <script>
-// ====================== DATA DUMMY ======================
+// ====================== DATABASE (kosong — data dari Spreadsheet) ======================
 const DB = {
-  motors: [
-    { id: 'M001', plat: 'BE 1234 AB', merek: 'Honda', tipe: 'Beat', tahun: 2022, harga: 100000, km: 14500, status: 'DISEWA', catatan: 'Warna merah, kondisi baik' },
-    { id: 'M002', plat: 'BE 5678 CD', merek: 'Honda', tipe: 'Vario 125', tahun: 2021, harga: 120000, km: 22300, status: 'TERSEDIA', catatan: 'Warna putih' },
-    { id: 'M003', plat: 'BE 9012 EF', merek: 'Yamaha', tipe: 'NMAX', tahun: 2023, harga: 175000, km: 8700, status: 'DISEWA', catatan: 'Warna hitam, kondisi prima' },
-    { id: 'M004', plat: 'BE 3456 GH', merek: 'Yamaha', tipe: 'Mio M3', tahun: 2020, harga: 90000, km: 31200, status: 'TERSEDIA', catatan: 'Warna biru' },
-    { id: 'M005', plat: 'BE 7890 IJ', merek: 'Honda', tipe: 'Scoopy', tahun: 2022, harga: 110000, km: 16800, status: 'SERVIS', catatan: 'Ganti oli rutin' },
-    { id: 'M006', plat: 'BE 2345 KL', merek: 'Yamaha', tipe: 'Aerox 155', tahun: 2023, harga: 200000, km: 5400, status: 'DISEWA', catatan: 'Warna abu-abu premium' },
-    { id: 'M007', plat: 'BE 6789 MN', merek: 'Honda', tipe: 'PCX 160', tahun: 2023, harga: 225000, km: 7200, status: 'DISEWA', catatan: 'Unit terbaru' },
-    { id: 'M008', plat: 'BE 0123 OP', merek: 'Suzuki', tipe: 'Address', tahun: 2021, harga: 85000, km: 28900, status: 'TERSEDIA', catatan: 'Warna hitam' },
-  ],
-  pelanggan: [
-    { id: 'P001', nama: 'Andi Saputra', wa: '081234567890', ktp: '1812345678901234', alamat: 'Jl. Sudirman No. 12, Bandar Lampung', catatan: 'Pelanggan tetap', totalSewa: 5, totalNilai: 1450000 },
-    { id: 'P002', nama: 'Budi Hartono', wa: '082345678901', ktp: '1812345678905678', alamat: 'Jl. ZA Pagar Alam, Bandar Lampung', catatan: '', totalSewa: 3, totalNilai: 875000 },
-    { id: 'P003', nama: 'Citra Dewi', wa: '083456789012', ktp: '1812345678909012', alamat: 'Jl. Teuku Umar, Bandar Lampung', catatan: 'Perlu konfirmasi KTP', totalSewa: 2, totalNilai: 600000 },
-    { id: 'P004', nama: 'Deni Kurniawan', wa: '084567890123', ktp: '1812345678903456', alamat: 'Jl. Kartini No. 5, Bandar Lampung', catatan: '', totalSewa: 8, totalNilai: 2350000 },
-    { id: 'P005', nama: 'Eka Putri', wa: '085678901234', ktp: '1812345678907890', alamat: 'Jl. Ahmad Yani, Metro', catatan: '', totalSewa: 1, totalNilai: 350000 },
-    { id: 'P006', nama: 'Fajar Hidayat', wa: '086789012345', ktp: '1812345678902345', alamat: 'Jl. Diponegoro, Bandar Lampung', catatan: 'Teman Budi', totalSewa: 4, totalNilai: 980000 },
-  ],
-  sewa: [
-    { id: 'S001', pelangganId: 'P001', motorId: 'M001', mulai: '2026-10-01', kembali: '2026-10-05', dp: 100000, total: 400000, status: 'AKTIF', catatan: 'Perjalanan dinas', durasi: 4 },
-    { id: 'S002', pelangganId: 'P003', motorId: 'M003', mulai: '2026-10-02', kembali: '2026-10-06', dp: 175000, total: 700000, status: 'AKTIF', catatan: '', durasi: 4 },
-    { id: 'S003', pelangganId: 'P004', motorId: 'M006', mulai: '2026-09-28', kembali: '2026-10-04', dp: 200000, total: 1200000, status: 'AKTIF', catatan: 'Wisata keluarga', durasi: 6 },
-    { id: 'S004', pelangganId: 'P006', motorId: 'M007', mulai: '2026-10-03', kembali: '2026-10-07', dp: 225000, total: 900000, status: 'AKTIF', catatan: '', durasi: 4 },
-    { id: 'S005', pelangganId: 'P002', motorId: 'M002', mulai: '2026-09-20', kembali: '2026-09-23', dp: 120000, total: 360000, status: 'SELESAI', catatan: '', durasi: 3 },
-    { id: 'S006', pelangganId: 'P005', motorId: 'M004', mulai: '2026-09-25', kembali: '2026-09-29', dp: 90000, total: 360000, status: 'SELESAI', catatan: '', durasi: 4 },
-  ],
-  aktivitas: [
-    { type: 'blue', teks: 'Fajar Hidayat menyewa PCX 160 (BE 6789 MN)', waktu: '2 jam lalu' },
-    { type: 'blue', teks: 'Andi Saputra — sewa aktif 4 hari lagi jatuh tempo', waktu: '4 jam lalu' },
-    { type: 'green', teks: 'Eka Putri mengembalikan Mio M3 — lunas', waktu: 'Kemarin 16:30' },
-    { type: 'orange', teks: 'Scoopy (BE 7890 IJ) masuk servis — ganti oli', waktu: 'Kemarin 09:00' },
-    { type: 'green', teks: 'Budi Hartono mengembalikan Vario 125', waktu: '3 hari lalu' },
-  ]
+  motors:     [],
+  pelanggan:  [],
+  sewa:       [],
+  keuangan:   [],
+  servis:     [],
+  perpanjangan: [],
+  aktivitas:  [],
 };
 
 // ====================== UTILS ======================
@@ -1506,8 +1532,14 @@ function diffDays(a, b) {
   return Math.max(1, Math.round((new Date(b) - new Date(a)) / 86400000));
 }
 function genId(prefix, arr) {
-  const n = arr.length + 1;
-  return prefix + String(n).padStart(3, '0');
+  // Format: MTR-001, PLG-001, SWA-001, FIN-001, SVC-001, EXT-001
+  const map = {
+    'M': 'MTR', 'P': 'PLG', 'S': 'SWA',
+    'F': 'FIN', 'SVC': 'SVC', 'EXT': 'EXT'
+  };
+  const code = map[prefix] || prefix;
+  const n = (arr ? arr.length : 0) + 1;
+  return code + '-' + String(n).padStart(3, '0');
 }
 function avatarColor(name) {
   const colors = ['#2563EB','#16A34A','#D97706','#7C3AED','#EA580C','#DC2626','#0891B2'];
@@ -1575,11 +1607,15 @@ function renderDashboard() {
   const days = ['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
   const months = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
   document.getElementById('dash-date').textContent = `${days[today.getDay()]}, ${today.getDate()} ${months[today.getMonth()]} ${today.getFullYear()}`;
+  updateStats();
 
   const aktif = DB.sewa.filter(s => s.status === 'AKTIF');
   const listEl = document.getElementById('rental-aktif-list');
   if (aktif.length === 0) {
-    listEl.innerHTML = `<div class="empty-state"><div class="empty-icon">📋</div><div class="empty-title">Belum ada rental aktif</div></div>`;
+    const isLoading = !window._dataLoaded;
+    listEl.innerHTML = isLoading
+      ? `<div style="text-align:center;padding:24px;color:var(--text-muted);font-size:13px">🔄 Memuat data...</div>`
+      : `<div class="empty-state"><div class="empty-icon">📋</div><div class="empty-title">Belum ada rental aktif</div></div>`;
     return;
   }
   listEl.innerHTML = aktif.map(s => {
@@ -1603,12 +1639,16 @@ function renderDashboard() {
 
   // Aktivitas
   const actEl = document.getElementById('activity-list');
-  actEl.innerHTML = DB.aktivitas.map(a =>
-    `<div class="activity-item">
-      <div class="activity-dot ${a.type}"></div>
-      <div><div class="activity-text">${a.teks}</div><div class="activity-time">${a.waktu}</div></div>
-    </div>`
-  ).join('');
+  if (DB.aktivitas.length === 0) {
+    actEl.innerHTML = `<div style="text-align:center;padding:16px;color:var(--text-muted);font-size:13px">Belum ada aktivitas.</div>`;
+  } else {
+    actEl.innerHTML = DB.aktivitas.slice(0, 8).map(a =>
+      `<div class="activity-item">
+        <div class="activity-dot ${a.type}"></div>
+        <div><div class="activity-text">${a.teks}</div><div class="activity-time">${a.waktu}</div></div>
+      </div>`
+    ).join('');
+  }
 }
 
 // ====================== ARMADA ======================
@@ -2318,27 +2358,40 @@ function updateKategoriOptions() {
 
 function getPeriodRange(periode) {
   const now   = new Date();
-  const today = now.toISOString().split('T')[0];
+  // Gunakan tanggal lokal, bukan UTC
+  const y = now.getFullYear();
+  const m = String(now.getMonth()+1).padStart(2,'0');
+  const d = String(now.getDate()).padStart(2,'0');
+  const today = `${y}-${m}-${d}`;
+
   if (periode === 'hari') return { dari: today, sampai: today };
+
   if (periode === 'minggu') {
-    const d = new Date(now); d.setDate(d.getDate() - 6);
-    return { dari: d.toISOString().split('T')[0], sampai: today };
+    const tujuhHariLalu = new Date(now);
+    tujuhHariLalu.setDate(tujuhHariLalu.getDate() - 6);
+    const dy = tujuhHariLalu.getFullYear();
+    const dm = String(tujuhHariLalu.getMonth()+1).padStart(2,'0');
+    const dd = String(tujuhHariLalu.getDate()).padStart(2,'0');
+    return { dari: `${dy}-${dm}-${dd}`, sampai: today };
   }
+
   if (periode === 'bulan') {
-    return { dari: `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-01`, sampai: today };
+    return { dari: `${y}-${m}-01`, sampai: today };
   }
-  return { dari: '', sampai: '' };
+
+  return { dari: '', sampai: '' }; // semua
 }
 
 function filterFinPeriode(p, btn) {
   finPeriode = p;
-  document.querySelectorAll('#page-keuangan .filter-chips:first-of-type .chip').forEach(c => c.classList.remove('active'));
+  // Fix: cari semua chip di baris pertama filter keuangan pakai id
+  document.querySelectorAll('.fin-chip-periode').forEach(c => c.classList.remove('active'));
   btn.classList.add('active');
   renderKeuangan();
 }
 function filterFinJenis(j, btn) {
   finJenis = j;
-  document.querySelectorAll('#page-keuangan .filter-chips:last-of-type .chip').forEach(c => c.classList.remove('active'));
+  document.querySelectorAll('.fin-chip-jenis').forEach(c => c.classList.remove('active'));
   btn.classList.add('active');
   renderKeuangan();
 }
@@ -2723,8 +2776,11 @@ async function doLogin() {
     hideLoginScreen();
     updateUserUI(username);
     showToast(`👋 Selamat datang, ${username}!`);
-    // Load data setelah login
-    setTimeout(() => testKoneksi(), 300);
+    // Load data + start auto-refresh setelah login
+    setTimeout(async () => {
+      await testKoneksi();
+      startAutoRefresh();
+    }, 300);
   } else {
     errEl.textContent = '❌ Username atau password salah';
     errEl.classList.add('show');
@@ -2737,6 +2793,7 @@ async function doLogin() {
 
 function doLogout() {
   if (!confirm('Yakin ingin keluar dari aplikasi?')) return;
+  stopAutoRefresh();
   sessionStorage.removeItem(AUTH_KEY);
   sessionStorage.removeItem(AUTH_USER_KEY);
   showLoginScreen();
@@ -2939,6 +2996,7 @@ async function loadFromBackend() {
     document.getElementById('mode-badge').style.color = 'var(--success)';
     document.getElementById('mode-badge').textContent = `🟢 Online — ${DB.motors.length} motor · ${DB.pelanggan.length} pelanggan · ${DB.sewa.length} sewa`;
 
+    window._dataLoaded = true;
     showToast(`✅ Data dimuat: ${DB.motors.length} motor, ${DB.pelanggan.length} pelanggan, ${DB.sewa.length} sewa`);
   } catch(e) {
     showToast('⚠️ Gagal load data: ' + e.message);
@@ -2960,6 +3018,101 @@ window.tambahMotorOnline = async function(payload) {
   }
 };
 
+// ====================== AUTO REFRESH ======================
+const REFRESH_INTERVAL = 120; // detik
+let _refreshTimer   = null;
+let _countdownTimer = null;
+let _nextRefresh    = 0;
+let _isRefreshing   = false;
+
+function startAutoRefresh() {
+  stopAutoRefresh();
+  scheduleNextRefresh();
+}
+
+function stopAutoRefresh() {
+  if (_refreshTimer)   clearTimeout(_refreshTimer);
+  if (_countdownTimer) clearInterval(_countdownTimer);
+  _refreshTimer = _countdownTimer = null;
+}
+
+function scheduleNextRefresh() {
+  _nextRefresh = REFRESH_INTERVAL;
+  updateCountdownUI();
+
+  _countdownTimer = setInterval(() => {
+    _nextRefresh--;
+    updateCountdownUI();
+    if (_nextRefresh <= 0) {
+      clearInterval(_countdownTimer);
+    }
+  }, 1000);
+
+  _refreshTimer = setTimeout(async () => {
+    await silentReload();
+    scheduleNextRefresh(); // jadwalkan lagi
+  }, REFRESH_INTERVAL * 1000);
+}
+
+function updateCountdownUI() {
+  const el = document.getElementById('reload-countdown');
+  if (!el) return;
+  if (_isRefreshing) { el.textContent = ''; return; }
+  const m = Math.floor(_nextRefresh / 60);
+  const s = _nextRefresh % 60;
+  el.textContent = m > 0 ? `${m}m ${s}s` : `${s}s`;
+}
+
+function setSyncStatus(state) {
+  // state: 'loading' | 'ok' | 'error'
+  const dot   = document.getElementById('sync-dot');
+  const label = document.getElementById('sync-label');
+  const btn   = document.getElementById('btn-reload');
+  const btnTop = document.getElementById('btn-topbar-reload');
+  if (!dot || !label) return;
+
+  if (state === 'loading') {
+    _isRefreshing = true;
+    dot.className   = 'sync-dot loading';
+    label.textContent = 'Memperbarui...';
+    if (btn)    { btn.classList.add('spinning'); btn.disabled = true; }
+    if (btnTop) btnTop.style.animation = 'spin .6s linear infinite';
+  } else if (state === 'ok') {
+    _isRefreshing = false;
+    dot.className   = 'sync-dot';
+    const now = new Date();
+    label.textContent = `Diperbarui ${now.getHours().toString().padStart(2,'0')}:${now.getMinutes().toString().padStart(2,'0')}:${now.getSeconds().toString().padStart(2,'0')}`;
+    if (btn)    { btn.classList.remove('spinning'); btn.disabled = false; }
+    if (btnTop) btnTop.style.animation = '';
+  } else {
+    _isRefreshing = false;
+    dot.className   = 'sync-dot';
+    dot.style.background = 'var(--danger)';
+    label.textContent = 'Gagal memperbarui';
+    if (btn)    { btn.classList.remove('spinning'); btn.disabled = false; }
+    if (btnTop) btnTop.style.animation = '';
+  }
+  updateCountdownUI();
+}
+
+async function silentReload() {
+  if (!isOnline() || !isLoggedIn()) return;
+  setSyncStatus('loading');
+  try {
+    await loadFromBackend();
+    setSyncStatus('ok');
+  } catch(e) {
+    setSyncStatus('error');
+  }
+}
+
+async function manualReload() {
+  if (_isRefreshing) return;
+  stopAutoRefresh();
+  await silentReload();
+  startAutoRefresh();
+}
+
 // ====================== INIT ======================
 renderDashboard();
 updateStats();
@@ -2969,7 +3122,12 @@ updateKoneksiUI();
 checkAuth();
 
 // Auto-load dari backend hanya jika sudah login
-if (isLoggedIn()) setTimeout(() => testKoneksi(), 500);
+if (isLoggedIn()) {
+  setTimeout(async () => {
+    await testKoneksi();
+    startAutoRefresh();
+  }, 500);
+}
 
 // Set today date default
 document.getElementById('s-mulai').value = new Date().toISOString().split('T')[0];

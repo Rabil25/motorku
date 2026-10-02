@@ -766,7 +766,7 @@
         <div class="user-avatar" id="sidebar-avatar">O</div>
         <div>
           <div class="user-name" id="sidebar-username">Owner</div>
-          <div class="user-role">Administrator</div>
+          <div class="user-role" id="sidebar-role">Administrator</div>
         </div>
       </div>
       <button class="btn-logout" onclick="doLogout()">🚪 Keluar</button>
@@ -1556,6 +1556,18 @@
   </div>
 </div>
 
+<!-- ============== MODAL: BAYAR SISA HUTANG ============== -->
+<div class="modal-backdrop" id="modal-bayar-sisa" onclick="closeModalOnBackdrop(event,'modal-bayar-sisa')">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-header">
+      <div class="modal-title">💰 Bayar Sisa Tagihan</div>
+      <button class="modal-close" onclick="closeModal('modal-bayar-sisa')">✕</button>
+    </div>
+    <div class="modal-body" id="modal-bayar-sisa-body"></div>
+  </div>
+</div>
+
 <!-- ============== MODAL: PERPANJANG SEWA ============== -->
 <div class="modal-backdrop" id="modal-perpanjang" onclick="closeModalOnBackdrop(event, 'modal-perpanjang')">
   <div class="modal-sheet">
@@ -1906,7 +1918,8 @@ function formatDate(d) {
   return dt.getDate() + ' ' + months[dt.getMonth()] + ' ' + dt.getFullYear();
 }
 function diffDays(a, b) {
-  return Math.max(1, Math.round((new Date(b) - new Date(a)) / 86400000));
+  // Tidak ada minimum — 0 jika sama atau lebih awal (konsisten dengan backend)
+  return Math.round((new Date(b) - new Date(a)) / 86400000);
 }
 function genId(prefix, arr) {
   // Format: MTR-001, PLG-001, SWA-001, FIN-001, SVC-001, EXT-001
@@ -2012,15 +2025,15 @@ function renderDashboard() {
   listEl.innerHTML = aktif.map(s => {
     const p = DB.pelanggan.find(x => x.id === s.pelangganId);
     const m = DB.motors.find(x => x.id === s.motorId);
-    return `<div class="rental-card" onclick="openDetailSewa('${s.id}')">
+    return `<div class="rental-card" onclick="openDetailSewa('${esc(s.id)}')">
       <div class="rental-card-top">
         <div>
-          <div class="rental-name">${p ? p.nama : '-'}</div>
-          <div class="rental-plat">${m ? m.merek + ' ' + m.tipe + ' · ' + m.plat : '-'}</div>
+          <div class="rental-name">${esc(p ? p.nama : '-')}</div>
+          <div class="rental-plat">${esc(m ? m.merek + ' ' + m.tipe + ' · ' + m.plat : '-')}</div>
         </div>
         ${badgeHtml('AKTIF')}
       </div>
-      <div class="rental-period">📅 ${formatDate(s.mulai)} — ${formatDate(s.kembali)} · ${s.durasi} hari</div>
+      <div class="rental-period">📅 ${esc(formatDate(s.mulai))} — ${esc(formatDate(s.kembali))} · ${esc(String(s.durasi))} hari</div>
       <div class="rental-footer">
         <div class="rental-price">${rupiah(s.total)}</div>
         <div style="font-size:12px;color:var(--text-muted)">DP ${rupiah(s.dp)} · Sisa ${rupiah(s.total - s.dp)}</div>
@@ -2062,8 +2075,8 @@ function renderMotor(filter, search) {
     <div class="motor-card" onclick="openDetailMotor('${m.id}')">
       <div class="motor-thumb">${motorEmoji(m.tipe)}</div>
       <div class="motor-info">
-        <div class="motor-name">${m.nama||m.merek+' '+m.tipe}</div>
-        <div class="motor-plat">${m.plat} · ${m.tahun||''}${m.warna?' · '+m.warna:''}</div>
+        <div class="motor-name">${esc(m.nama||m.merek+' '+m.tipe)}</div>
+        <div class="motor-plat">${esc(m.plat)} · ${esc(String(m.tahun||''))}${m.warna?' · '+esc(m.warna):''}</div>
         <div class="motor-meta">
           ${badgeHtml(m.status)}
           <span class="motor-price">${rupiah(m.harga)}/hari</span>
@@ -2106,11 +2119,11 @@ function renderPelanggan(search) {
       <div class="avatar" style="background:${p.statusPel==='Blacklist'?'var(--danger)':avatarColor(p.nama)}">${p.nama.charAt(0)}</div>
       <div class="pelanggan-info">
         <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
-          <div class="pelanggan-name">${p.nama}</div>
+          <div class="pelanggan-name">${esc(p.nama)}</div>
           ${p.statusPel && p.statusPel!=='Baik'?`<span class="badge badge-${statusBadgeMap[p.statusPel]||'baik'}">${p.statusPel}</span>`:''}
           ${p.fotoKtp?'<span style="font-size:14px" title="Foto KTP tersedia">🪪</span>':''}
         </div>
-        <div class="pelanggan-wa">📱 ${p.wa}${p.kota?' · 📍 '+p.kota:''}</div>
+        <div class="pelanggan-wa">📱 ${esc(p.wa)}${p.kota?' · 📍 '+esc(p.kota):''}</div>
         <div class="pelanggan-stats">
           <span class="pelanggan-stat"><strong>${p.totalSewa||0}x</strong> sewa</span>
           <span class="pelanggan-stat"><strong>${rupiah(p.totalNilai||0)}</strong> total</span>
@@ -2155,7 +2168,15 @@ function renderSewa(filter, search) {
       <div class="rental-period">📅 ${formatDate(s.mulai)} — ${formatDate(s.kembali)} · ${s.durasi} hari</div>
       <div class="rental-footer">
         <div class="rental-price">${rupiah(s.total)}</div>
-        <div style="font-size:12px;color:${s.status==='AKTIF'?'var(--warning)':'var(--text-muted)'}">Sisa ${rupiah(s.total - s.dp)}</div>
+        <div style="font-size:12px;color:${
+          s.status==='AKTIF' ? 'var(--warning)' :
+          s.statusBayar==='BELUM_LUNAS' ? 'var(--danger)' : 'var(--success)'
+        }">
+          ${s.status === 'SELESAI' && s.statusBayar === 'BELUM_LUNAS'
+            ? `💳 Hutang ${rupiah(s.sisaTagihan||s.sisa)}`
+            : s.status === 'SELESAI' ? '✅ Lunas'
+            : `Sisa ${rupiah(s.total - s.dp)}`}
+        </div>
       </div>
     </div>`;
   }).join('');
@@ -2292,7 +2313,7 @@ function hitungDurasi() {
   if (!motorId || !mulai || !kembali) return;
   if (kembali <= mulai) { el.innerHTML = '<div style="color:var(--danger)">⚠️ Tanggal kembali harus setelah tanggal mulai.</div>'; return; }
   const m = DB.motors.find(x => x.id === motorId);
-  const dur = diffDays(mulai, kembali);
+  const dur = Math.max(1, diffDays(mulai, kembali)); // minimum 1 hari untuk sewa
   const total = dur * m.harga;
   const sisa = total - dp;
   el.innerHTML = `
@@ -2331,8 +2352,14 @@ async function tambahSewa() {
 
   let sewa;
   try {
+    // DEPOSIT field sekarang free text → kirim sebagai JAMINAN
+    const jaminan = document.getElementById('s-deposit').value.trim();
+    const depositUang = 0; // deposit uang dipisah, sementara 0
+    const today = new Date().toISOString().split('T')[0];
     const payload = { PELANGGAN_ID: pelId, MOTOR_ID: motorId, TGL_MULAI: mulai, TGL_KEMBALI: kembali,
-      DP: dp, DEPOSIT: deposit, CATATAN: catatan, METODE_PEMBAYARAN: metode, LOKASI_ANTAR: lokasi,
+      DP: dp, JAMINAN: jaminan, DEPOSIT_UANG: depositUang,
+      TANGGAL_BAYAR_DP: today, // tanggal DP = hari ini, bukan tanggal mulai sewa
+      CATATAN: catatan, METODE_PEMBAYARAN: metode, LOKASI_ANTAR: lokasi,
       JAM_KELUAR: jamKeluar, JAM_KEMBALI_EST: jamKembali, FOTO_MOTOR: fotoMotor || '' };
     if (isOnline()) {
       showToast('🔄 Menyimpan ke database...');
@@ -2479,7 +2506,7 @@ function openDetailPelanggan(id) {
       ${p.jenisPenyewa?`<div class="info-row"><span class="info-row-label">Jenis</span><span class="info-row-val">${p.jenisPenyewa}</span></div>`:''}
       ${p.referral?`<div class="info-row"><span class="info-row-label">Referral</span><span class="info-row-val">${p.referral}</span></div>`:''}
       ${p.catatan?`<div class="info-row"><span class="info-row-label">Catatan</span><span class="info-row-val">${p.catatan}</span></div>`:''}
-      ${p.fotoKtp?`<div class="info-row" style="align-items:flex-start"><span class="info-row-label">Foto KTP</span><span class="info-row-val"><img src="${p.fotoKtp}" style="width:100%;max-width:180px;border-radius:8px;object-fit:cover" onclick="this.style.maxWidth=this.style.maxWidth==='100%'?'180px':'100%'"></span></div>`:''}
+      ${p.fotoKtp&&safeUrl(p.fotoKtp)?`<div class="info-row" style="align-items:flex-start"><span class="info-row-label">Foto KTP</span><span class="info-row-val"><img src="${safeUrl(p.fotoKtp)}" style="width:100%;max-width:180px;border-radius:8px;object-fit:cover" onclick="this.style.maxWidth=this.style.maxWidth==='100%'?'180px':'100%'"></span></div>`:''}
     </div>
     <div style="padding:12px 16px;">
       <div style="font-size:12px;font-weight:700;color:var(--text-muted);margin-bottom:8px">RIWAYAT SEWA</div>
@@ -2567,7 +2594,8 @@ function openDetailSewa(id) {
       <div class="info-row"><span class="info-row-label">ID Transaksi</span><span class="info-row-val" style="font-size:11px">${s.id}</span></div>
       <div class="info-row"><span class="info-row-label">Harga/hari</span><span class="info-row-val">${rupiah(m?.harga || s.harga)}</span></div>
       ${s.metode?`<div class="info-row"><span class="info-row-label">Metode Bayar</span><span class="info-row-val">${s.metode}</span></div>`:''}
-      ${s.deposit>0?`<div class="info-row"><span class="info-row-label">Deposit/Jaminan</span><span class="info-row-val">${rupiah(s.deposit)}</span></div>`:''}
+      ${s.jaminan?`<div class="info-row"><span class="info-row-label">Jaminan</span><span class="info-row-val">${s.jaminan}</span></div>`:''}
+      ${s.depositUang>0?`<div class="info-row"><span class="info-row-label">Deposit Uang</span><span class="info-row-val">${rupiah(s.depositUang)}</span></div>`:''}
       ${s.jamKeluar?`<div class="info-row"><span class="info-row-label">Jam Keluar</span><span class="info-row-val">${s.jamKeluar}</span></div>`:''}
       ${s.lokasi?`<div class="info-row"><span class="info-row-label">Lokasi Antar</span><span class="info-row-val">${s.lokasi}</span></div>`:''}
       ${s.catatan ? `<div class="info-row"><span class="info-row-label">Catatan</span><span class="info-row-val">${s.catatan}</span></div>` : ''}
@@ -2580,8 +2608,21 @@ function openDetailSewa(id) {
       <button class="btn btn-danger" style="font-size:13px" onclick="bukaModalPengembalian('${s.id}')">✅ Kembalikan</button>
     </div>` : `
     <div style="padding:12px 16px">
-      <div style="font-size:12px;color:var(--text-muted);margin-bottom:8px">Sewa selesai pada ${formatDate(s.tglAktual || s.kembali)}</div>
-      <button class="btn btn-secondary" onclick="closeModal('modal-detail-sewa')">Tutup</button>
+      <div style="font-size:12px;color:var(--text-muted);margin-bottom:8px">
+        Selesai: ${formatDate(s.tglAktual || s.kembali)}
+      </div>
+      ${(s.statusBayar === 'BELUM_LUNAS' || s.sisaTagihan > 0) ? `
+      <div style="background:var(--warning-light);border:1px solid var(--warning);border-radius:var(--radius-sm);padding:10px 12px;margin-bottom:10px;font-size:13px;color:var(--warning);font-weight:600">
+        💳 Sisa hutang: <strong>${rupiah(s.sisaTagihan || (s.total - s.dp))}</strong>
+      </div>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-primary btn-sm" onclick="bukaModalBayarSisa('${s.id}')">💰 Bayar Sisa</button>
+        <button class="btn btn-secondary btn-sm" onclick="closeModal('modal-detail-sewa')">Tutup</button>
+      </div>` : `
+      <div style="display:flex;gap:8px;align-items:center">
+        <span style="font-size:12px;font-weight:600;color:var(--success)">✅ LUNAS</span>
+        <button class="btn btn-secondary btn-sm" style="margin-left:auto" onclick="closeModal('modal-detail-sewa')">Tutup</button>
+      </div>`}
     </div>`}`;
   openModal('modal-detail-sewa');
 }
@@ -2742,9 +2783,9 @@ function hitungDenda() {
   const dendaEl   = document.getElementById('kemb-denda-info');
   if (!tglAktual) return;
   if (tglAktual > s.kembali) {
-    const terlambat = diffDays(s.kembali, tglAktual);
-    // Denda = terlambat × harga sewa harian
-    const harga = m?.harga || s.harga || 0;
+    const terlambat = diffDays(s.kembali, tglAktual); // tidak ada minimum — bisa 0
+    // ATURAN BISNIS: denda = HARGA_PER_HARI dari kontrak sewa × hari terlambat
+    const harga = s.harga || m?.harga || 0; // pakai harga dari kontrak (historical snapshot)
     const denda = terlambat * harga;
     dendaEl.style.display = 'block';
     dendaEl.innerHTML = `⚠️ Terlambat ${terlambat} hari × ${rupiah(harga)}/hari = Denda ${rupiah(denda)}`;
@@ -2831,18 +2872,27 @@ ${sisaHutang > 0 ? `Sisa hutang: ${rupiah(sisaHutang)}` : 'Status: LUNAS'}`;
 
   try {
     if (isOnline()) {
-      await apiPost('return_rental', {
+      // Backend menghitung DENDA sendiri — frontend tidak kirim nilai denda
+      // Backend akan return summary authoritative dengan denda, total kewajiban, sisa
+      const res = await apiPost('return_rental', {
         SEWA_ID: s.id,
         TGL_KEMBALI_AKTUAL: tglAktual,
         KM_KEMBALI: km,
         KONDISI: kondisi,
-        DENDA: denda,
-        PELUNASAN: pelunasan,
-        STATUS_PEMBAYARAN: statusBayar,
-        SISA_HUTANG: sisaHutang > 0 ? sisaHutang : 0,
+        PELUNASAN: pelunasan,       // jumlah yang dibayar saat ini
+        TANGGAL_BAYAR: tglAktual,
         METODE_PEMBAYARAN: metode,
-        CATATAN: catatan + (sisaHutang > 0 ? ` | Hutang: ${rupiah(sisaHutang)}` : ''),
+        CATATAN: catatan,
       });
+      // Gunakan summary dari backend sebagai authoritative
+      if (res && res.summary) {
+        s.statusBayar  = res.summary.statusPembayaran;
+        s.sisaTagihan  = res.summary.sisaTagihan;
+        // Tampilkan denda hasil hitungan backend
+        if (res.dendaHitung > 0 && res.dendaHitung !== denda) {
+          showToast(`ℹ️ Denda dihitung backend: ${rupiah(res.dendaHitung)}`);
+        }
+      }
     }
     // Update lokal
     s.status = 'SELESAI';
@@ -3098,6 +3148,97 @@ async function simpanServis() {
     renderServis(); updateStats();
     if (currentPage === 'keuangan') renderKeuangan();
     if (currentPage === 'armada') renderMotor();
+  } catch(e) { showToast('❌ ' + e.message); }
+}
+
+// ====================== BAYAR SISA HUTANG (post-return) ======================
+async function bukaModalBayarSisa(sewaId) {
+  const s = DB.sewa.find(x => x.id === sewaId);
+  if (!s) return;
+  const p = DB.pelanggan.find(x => x.id === s.pelangganId);
+  const m = DB.motors.find(x => x.id === s.motorId);
+  closeModal('modal-detail-sewa');
+
+  // Ambil summary dari backend untuk angka authoritative
+  let sisaTagihan = s.sisaTagihan || (s.total - s.dp);
+  if (isOnline()) {
+    try {
+      const summary = await apiGet('rental_summary', { id: sewaId });
+      sisaTagihan = summary.sisaTagihan;
+      s.sisaTagihan = sisaTagihan;
+      s.statusBayar = summary.statusPembayaran;
+    } catch(e) { /* pakai data lokal */ }
+  }
+
+  const body = document.getElementById('modal-bayar-sisa-body');
+  body.innerHTML = `
+    <div style="background:var(--warning-light);border-radius:var(--radius-sm);padding:12px;margin-bottom:14px;font-size:13px">
+      <div style="font-weight:700">${p?.nama || '-'} · ${m?.merek || ''} ${m?.tipe || ''}</div>
+      <div style="color:var(--warning);font-weight:700;margin-top:4px">Sisa Tagihan: ${rupiah(sisaTagihan)}</div>
+      <div style="color:var(--text-muted);font-size:11px;margin-top:2px">ID Sewa: ${sewaId}</div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Jumlah Bayar (Rp) *</label>
+      <input class="form-control" id="bayar-sisa-nominal" type="number" value="${sisaTagihan}" max="${sisaTagihan}">
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Metode Bayar</label>
+        <select class="form-control" id="bayar-sisa-metode">
+          <option>Cash</option><option>Transfer</option><option>QRIS</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Tanggal Bayar</label>
+        <input class="form-control" id="bayar-sisa-tgl" type="date" value="${new Date().toISOString().split('T')[0]}">
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Catatan</label>
+      <input class="form-control" id="bayar-sisa-catatan" placeholder="Opsional...">
+    </div>
+    <div class="form-actions">
+      <button class="btn btn-secondary" onclick="closeModal('modal-bayar-sisa')">Batal</button>
+      <button class="btn btn-primary" onclick="simpanBayarSisa('${sewaId}', ${sisaTagihan})">Bayar Sekarang</button>
+    </div>`;
+  openModal('modal-bayar-sisa');
+}
+
+async function simpanBayarSisa(sewaId, sisaTagihan) {
+  const nominal = parseInt(document.getElementById('bayar-sisa-nominal').value) || 0;
+  const metode  = document.getElementById('bayar-sisa-metode').value;
+  const tgl     = document.getElementById('bayar-sisa-tgl').value;
+  const catatan = document.getElementById('bayar-sisa-catatan').value.trim();
+  if (nominal <= 0) { showToast('⚠️ Nominal harus lebih dari 0'); return; }
+  try {
+    if (isOnline()) {
+      showToast('🔄 Menyimpan pembayaran...');
+      const res = await apiPost('create_payment', {
+        SEWA_ID:     sewaId,
+        NOMINAL:     nominal,
+        JENIS:       'PELUNASAN',
+        METODE:      metode,
+        TANGGAL_BAYAR: tgl,
+        CATATAN:     catatan,
+      });
+      // Update lokal dari summary backend
+      if (res && res.summary) {
+        const s = DB.sewa.find(x => x.id === sewaId);
+        if (s) {
+          s.sisaTagihan = res.summary.sisaTagihan;
+          s.statusBayar = res.summary.statusPembayaran;
+        }
+      }
+    } else {
+      const s = DB.sewa.find(x => x.id === sewaId);
+      if (s) { s.sisaTagihan = Math.max(0, (s.sisaTagihan||0) - nominal); }
+    }
+    const p = DB.pelanggan.find(x => x.id === DB.sewa.find(x => x.id === sewaId)?.pelangganId);
+    DB.aktivitas.unshift({ type: 'green', teks: `Bayar hutang ${sewaId} — ${rupiah(nominal)} (${metode})`, waktu: 'Baru saja' });
+    closeModal('modal-bayar-sisa');
+    showToast(`✅ Pembayaran ${rupiah(nominal)} berhasil dicatat`);
+    if (currentPage === 'sewa') renderSewa();
+    renderDashboard();
   } catch(e) { showToast('❌ ' + e.message); }
 }
 
@@ -3586,39 +3727,68 @@ function simpanIzin() {
 }
 
 // ====================== AUTH SYSTEM ======================
-const AUTH_KEY     = 'dns_rental_session';
-const AUTH_USER_KEY= 'dns_rental_user';
-// Kredensial default — tersimpan di localStorage, bisa diubah dari Pengaturan
-// Format: { username, passwordHash }
-const DEFAULT_CREDS = { username: 'owner', password: 'dns2024' };
-
-function hashStr(str) {
-  // Simple hash untuk localStorage (bukan crypto grade, cukup untuk proteksi dasar)
-  let h = 0;
-  for (let i = 0; i < str.length; i++) {
-    h = Math.imul(31, h) + str.charCodeAt(i) | 0;
-  }
-  return h.toString(36);
+// ====================== XSS PROTECTION ======================
+function esc(str) {
+  if (str === null || str === undefined) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
 }
 
-function getStoredCreds() {
-  try {
-    const raw = localStorage.getItem('dns_rental_creds');
-    return raw ? JSON.parse(raw) : { username: DEFAULT_CREDS.username, passHash: hashStr(DEFAULT_CREDS.password) };
-  } catch { return { username: DEFAULT_CREDS.username, passHash: hashStr(DEFAULT_CREDS.password) }; }
+// Safe URL — only allow https:// and /
+function safeUrl(url) {
+  if (!url) return '';
+  if (/^https:\/\//.test(url)) return url;
+  return '';
+}
+
+// ====================== AUTH v3 — SERVER-SIDE ======================
+// Hash password dengan SHA-256-like (crypto.subtle, atau fallback djb2)
+async function hashPassword(password) {
+  if (window.crypto && window.crypto.subtle) {
+    try {
+      const msgBuffer = new TextEncoder().encode(password);
+      const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+      const hashArray = Array.from(new Uint8Array(hashBuffer));
+      return hashArray.map(b => b.toString(16).padStart(2,'0')).join('');
+    } catch(e) { /* fallback */ }
+  }
+  // Fallback djb2 hash (non-crypto, only for offline mode)
+  let h = 5381;
+  for (let i = 0; i < password.length; i++) {
+    h = ((h << 5) + h) + password.charCodeAt(i);
+    h = h & 0xFFFFFFFF;
+  }
+  return (h >>> 0).toString(16).padStart(8,'0');
+}
+
+const SESSION_KEY = 'dns_session_token';
+const SESSION_USER_KEY = 'dns_session_user';
+const SESSION_ROLE_KEY = 'dns_session_role';
+const GAS_URL_KEY = 'motorku_api_url';
+const GAS_URL_DEFAULT = 'https://script.google.com/macros/s/AKfycby4lUgavwp-mAHutdntVUve1wsJd44YBILhBTk8XIEGzQcFKdR3CZCLuyzEZDyDLdw/exec';
+
+function getApiUrl() {
+  return localStorage.getItem(GAS_URL_KEY) || GAS_URL_DEFAULT;
+}
+
+function getSessionToken() {
+  return sessionStorage.getItem(SESSION_KEY) || '';
 }
 
 function isLoggedIn() {
-  return !!sessionStorage.getItem(AUTH_KEY);
+  return !!sessionStorage.getItem(SESSION_KEY);
 }
 
 function checkAuth() {
-  if (!isLoggedIn()) {
-    showLoginScreen();
-  } else {
+  if (!isLoggedIn()) showLoginScreen();
+  else {
     hideLoginScreen();
-    const user = sessionStorage.getItem(AUTH_USER_KEY) || 'owner';
-    updateUserUI(user);
+    updateUserUI(sessionStorage.getItem(SESSION_USER_KEY) || 'owner',
+                 sessionStorage.getItem(SESSION_ROLE_KEY) || 'OWNER');
   }
 }
 
@@ -3631,11 +3801,13 @@ function hideLoginScreen() {
   document.getElementById('login-screen').classList.add('hidden');
 }
 
-function updateUserUI(username) {
-  const avatar = document.getElementById('sidebar-avatar');
-  const nameEl = document.getElementById('sidebar-username');
-  if (avatar) avatar.textContent = username.charAt(0).toUpperCase();
-  if (nameEl) nameEl.textContent = username;
+function updateUserUI(username, role) {
+  const av = document.getElementById('sidebar-avatar');
+  const nm = document.getElementById('sidebar-username');
+  const rl = document.getElementById('sidebar-role');
+  if (av) av.textContent = username.charAt(0).toUpperCase();
+  if (nm) nm.textContent = esc(username);
+  if (rl) rl.textContent = role || '';
 }
 
 function togglePass() {
@@ -3646,125 +3818,147 @@ function togglePass() {
 }
 
 async function doLogin() {
-  const username = document.getElementById('login-user').value.trim();
+  const username = document.getElementById('login-user').value.trim().toLowerCase();
   const password = document.getElementById('login-pass').value;
   const errEl    = document.getElementById('login-error');
   const btn      = document.getElementById('btn-login');
-
   if (!username || !password) {
     errEl.textContent = '⚠️ Username dan password wajib diisi';
     errEl.classList.add('show'); return;
   }
-
   btn.disabled = true; btn.textContent = 'Memverifikasi...';
   errEl.classList.remove('show');
 
-  // Cek kredensial lokal dulu (cepat, offline-capable)
-  const creds = getStoredCreds();
-  const passHash = hashStr(password);
+  try {
+    const passHash = await hashPassword(password);
+    // Always authenticate server-side
+    const base = getApiUrl();
+    const payload = encodeURIComponent(JSON.stringify({
+      action: 'login', data: { username, passHash }
+    }));
+    const res  = await fetch(base, {
+      method: 'POST', redirect: 'follow',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: 'payload=' + payload,
+    });
+    const json = await res.json();
+    if (!json.success) throw new Error(json.error || 'Login gagal');
 
-  let valid = false;
+    const loginData = json.data;
+    if (!loginData.valid) {
+      errEl.textContent = '❌ Username atau password salah';
+      errEl.classList.add('show');
+      document.getElementById('login-pass').value = '';
+      document.getElementById('login-pass').focus();
+      return;
+    }
 
-  if (username === creds.username && passHash === creds.passHash) {
-    valid = true;
-  } else if (isOnline()) {
-    // Cek ke backend jika online
-    try {
-      const res = await apiGet('login', { username, passHash });
-      valid = res && res.valid;
-    } catch(e) { /* offline fallback sudah di atas */ }
-  }
+    if (loginData.firstTime) {
+      // First time — create account
+      errEl.textContent = '⚠️ Belum ada akun. Jalankan setupFirstAccount() di Apps Script.';
+      errEl.classList.add('show');
+      return;
+    }
 
-  if (valid) {
-    sessionStorage.setItem(AUTH_KEY, '1');
-    sessionStorage.setItem(AUTH_USER_KEY, username);
+    // Store server-issued token
+    sessionStorage.setItem(SESSION_KEY,      loginData.token);
+    sessionStorage.setItem(SESSION_USER_KEY,  loginData.username);
+    sessionStorage.setItem(SESSION_ROLE_KEY,  loginData.role || 'STAFF');
     hideLoginScreen();
-    updateUserUI(username);
-    showToast(`👋 Selamat datang, ${username}!`);
-    // Load data + start auto-refresh setelah login
-    setTimeout(async () => {
-      await testKoneksi();
-      startAutoRefresh();
-    }, 300);
-  } else {
-    errEl.textContent = '❌ Username atau password salah';
+    updateUserUI(loginData.username, loginData.role);
+    showToast('👋 Selamat datang, ' + esc(loginData.username) + '!');
+    setTimeout(async () => { await testKoneksi(); startAutoRefresh(); }, 300);
+  } catch(e) {
+    errEl.textContent = '❌ ' + esc(e.message);
     errEl.classList.add('show');
-    document.getElementById('login-pass').value = '';
-    document.getElementById('login-pass').focus();
+  } finally {
+    btn.disabled = false; btn.textContent = 'Masuk';
   }
-
-  btn.disabled = false; btn.textContent = 'Masuk';
 }
 
-function doLogout() {
+async function doLogout() {
   if (!confirm('Yakin ingin keluar dari aplikasi?')) return;
   stopAutoRefresh();
-  sessionStorage.removeItem(AUTH_KEY);
-  sessionStorage.removeItem(AUTH_USER_KEY);
+  // Revoke token server-side (best effort)
+  try { await apiPost('logout', {}); } catch(e) {}
+  sessionStorage.clear();
   showLoginScreen();
   document.getElementById('login-user').value = '';
   document.getElementById('login-pass').value = '';
   showToast('👋 Berhasil keluar');
 }
 
-function gantiPassword() {
+async function gantiPassword() {
   const lama    = document.getElementById('pass-lama').value;
   const baru    = document.getElementById('pass-baru').value;
   const konfirm = document.getElementById('pass-konfirm').value;
-
   if (!lama || !baru || !konfirm) { showToast('⚠️ Semua field wajib diisi'); return; }
-
-  const creds = getStoredCreds();
-  if (hashStr(lama) !== creds.passHash) { showToast('❌ Password lama salah'); return; }
   if (baru.length < 6) { showToast('⚠️ Password baru minimal 6 karakter'); return; }
   if (baru !== konfirm) { showToast('⚠️ Konfirmasi password tidak cocok'); return; }
-
-  const newCreds = { username: creds.username, passHash: hashStr(baru) };
-  localStorage.setItem('dns_rental_creds', JSON.stringify(newCreds));
-
-  ['pass-lama','pass-baru','pass-konfirm'].forEach(id => document.getElementById(id).value = '');
-  showToast('✅ Password berhasil diubah');
+  try {
+    const oldHash = await hashPassword(lama);
+    const newHash = await hashPassword(baru);
+    await apiPost('change_password', {
+      username:    sessionStorage.getItem(SESSION_USER_KEY),
+      oldPassHash: oldHash,
+      newPassHash: newHash,
+    });
+    ['pass-lama','pass-baru','pass-konfirm'].forEach(id => document.getElementById(id).value = '');
+    showToast('✅ Password berhasil diubah');
+  } catch(e) { showToast('❌ ' + e.message); }
 }
 
-// ====================== API LAYER ======================
-const GAS_URL_KEY = 'motorku_api_url';
-// URL default — otomatis terpakai di semua browser tanpa perlu input ulang
-const GAS_URL_DEFAULT = 'https://script.google.com/macros/s/AKfycby4lUgavwp-mAHutdntVUve1wsJd44YBILhBTk8XIEGzQcFKdR3CZCLuyzEZDyDLdw/exec';
+// ====================== API LAYER v3 ======================
 
-function getApiUrl() {
-  return localStorage.getItem(GAS_URL_KEY) || GAS_URL_DEFAULT;
+// Generate unique request ID for idempotency
+function genReqId() {
+  return 'REQ-' + Date.now().toString(36) + '-' + Math.random().toString(36).substr(2,6);
 }
 
 async function apiGet(action, params = {}) {
-  const base = getApiUrl();
-  const url  = new URL(base);
+  const base  = getApiUrl();
+  const url   = new URL(base);
   url.searchParams.set('action', action);
-  Object.entries(params).forEach(([k,v]) => url.searchParams.set(k, v));
-  // GAS GET → fetch biasa, response JSON langsung
+  url.searchParams.set('token', getSessionToken());
+  Object.entries(params).forEach(([k,v]) => { if (k !== '_actor' && k !== '_role') url.searchParams.set(k, v); });
   const res  = await fetch(url.toString(), { redirect: 'follow' });
   const text = await res.text();
   let json;
-  try { json = JSON.parse(text); }
-  catch(e) { throw new Error('Response bukan JSON — cek deployment GAS'); }
-  if (!json.success) throw new Error(json.error || 'Error dari server');
+  try { json = JSON.parse(text); } catch(e) { throw new Error('Response bukan JSON'); }
+  if (!json.success) {
+    if (json.code === 'AUTH_EXPIRED' || json.code === 'AUTH_MISSING') {
+      sessionStorage.clear(); showLoginScreen();
+      throw new Error('Sesi berakhir. Silakan login kembali.');
+    }
+    throw new Error(json.error || 'Error dari server');
+  }
   return json.data;
 }
 
 async function apiPost(action, data = {}) {
-  const base = getApiUrl();
-  // GAS POST — kirim sebagai form URLencoded agar tidak kena CORS preflight
-  const payload = encodeURIComponent(JSON.stringify({ action, data }));
-  const res = await fetch(base, {
-    method:  'POST',
+  const base    = getApiUrl();
+  const reqId   = genReqId();
+  const payload = encodeURIComponent(JSON.stringify({
+    action,
+    data,
+    token:     getSessionToken(),
+    requestId: reqId,
+  }));
+  const res  = await fetch(base, {
+    method: 'POST', redirect: 'follow',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body:    'payload=' + payload,
-    redirect: 'follow',
+    body: 'payload=' + payload,
   });
   const text = await res.text();
   let json;
-  try { json = JSON.parse(text); }
-  catch(e) { throw new Error('Response bukan JSON — cek deployment GAS'); }
-  if (!json.success) throw new Error(json.error || 'Error dari server');
+  try { json = JSON.parse(text); } catch(e) { throw new Error('Response bukan JSON'); }
+  if (!json.success) {
+    if (json.code === 'AUTH_EXPIRED' || json.code === 'AUTH_MISSING') {
+      sessionStorage.clear(); showLoginScreen();
+      throw new Error('Sesi berakhir. Silakan login kembali.');
+    }
+    throw new Error(json.error || 'Error dari server');
+  }
   return json.data;
 }
 
@@ -3841,13 +4035,15 @@ async function loadFromBackend() {
     showToast('🔄 Memuat data dari server...');
 
     // Load semua data paralel
-    const [motors, pelanggan, sewas, dash, finData, servisData] = await Promise.all([
+    const [motors, pelanggan, sewas, dash, finData, servisData, perizinanData, perpData] = await Promise.all([
       apiGet('motors'),
       apiGet('customers'),
       apiGet('rentals'),
       apiGet('dashboard'),
       apiGet('finance'),
       apiGet('servis').catch(() => []),
+      apiGet('perizinan').catch(() => []),
+      apiGet('perpanjangan').catch(() => []),
     ]);
 
     // Normalisasi motors ke format lokal (lengkap)
@@ -3870,14 +4066,17 @@ async function loadFromBackend() {
       totalSewa: Number(p.TOTAL_SEWA||0), totalNilai: Number(p.TOTAL_NILAI||0),
     }));
 
-    // Normalisasi sewa (lengkap)
+    // Normalisasi sewa (lengkap v2)
     DB.sewa = sewas.map(s => ({
       id: s.ID, pelangganId: s.PELANGGAN_ID, motorId: s.MOTOR_ID,
       mulai: fmtDateLocal(s.TGL_MULAI), kembali: fmtDateLocal(s.TGL_KEMBALI),
-      tglAktual: s.TGL_KEMBALI_AKTUAL||'',
+      tglAktual: s.TGL_KEMBALI_AKTUAL ? fmtDateLocal(s.TGL_KEMBALI_AKTUAL) : '',
       harga: Number(s.HARGA_PER_HARI), durasi: Number(s.DURASI),
-      dp: Number(s.DP), deposit: s.DEPOSIT||'', total: Number(s.TOTAL),
-      sisa: Number(s.SISA), metode: s.METODE_PEMBAYARAN||'',
+      dp: Number(s.DP), jaminan: s.JAMINAN||'', depositUang: Number(s.DEPOSIT_UANG||0),
+      total: Number(s.TOTAL), sisa: Number(s.SISA),
+      statusBayar: s.STATUS_PEMBAYARAN||'BELUM_LUNAS',
+      sisaTagihan: Number(s.SISA||0),
+      metode: s.METODE_PEMBAYARAN||'',
       lokasi: s.LOKASI_ANTAR||'', jamKeluar: s.JAM_KELUAR||'',
       fotoMotor: s.FOTO_MOTOR||'', status: s.STATUS, catatan: s.CATATAN,
     }));
@@ -3924,6 +4123,43 @@ async function loadFromBackend() {
         status: s.STATUS||'SELESAI',
         catatan: s.CATATAN||'',
       }));
+    }
+
+    // Normalisasi perizinan
+    if (perizinanData && perizinanData.length > 0) {
+      DB.perizinan = perizinanData.map(i => ({
+        id: i.ID, nama: i.NAMA_DOKUMEN, jenis: i.JENIS||'',
+        nomor: i.NOMOR_DOKUMEN||'', terbit: fmtDateLocal(i.TANGGAL_TERBIT),
+        expired: fmtDateLocal(i.TANGGAL_EXPIRED), instansi: i.INSTANSI||'',
+        biaya: Number(i.BIAYA||0), pic: i.PIC||'', motorId: i.MOTOR_ID||'',
+        // Resolve nama motor dari DB
+        motorPlat: DB.motors.find(m => m.id === i.MOTOR_ID)?.plat || '',
+        motorNama: DB.motors.find(m => m.id === i.MOTOR_ID)?.nama || '',
+        ket: i.KETERANGAN||'',
+      }));
+    }
+
+    // Normalisasi perpanjangan
+    if (perpData && perpData.length > 0) {
+      DB.perpanjangan = perpData.map(p => ({
+        id: p.ID, sewaId: p.SEWA_ID,
+        tglPerpanjangan: fmtDateLocal(p.TGL_PERPANJANGAN),
+        tglLama: fmtDateLocal(p.TGL_KEMBALI_LAMA),
+        tglBaru: fmtDateLocal(p.TGL_KEMBALI_BARU),
+        durasiTambah: Number(p.DURASI_TAMBAHAN||0),
+        harga: Number(p.HARGA_PER_HARI||0),
+        biaya: Number(p.BIAYA_TAMBAHAN||0),
+        bayar: Number(p.PEMBAYARAN||0),
+        metode: p.METODE_PEMBAYARAN||'',
+        catatan: p.CATATAN||'',
+      }));
+    }
+
+    // Dashboard hutang count
+    if (dash.hutangBelumLunas > 0) {
+      DB.aktivitas.unshift({ type: 'orange',
+        teks: `${dash.hutangBelumLunas} rental selesai masih ada hutang`,
+        waktu: 'Info' });
     }
 
     // Re-render semua halaman

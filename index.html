@@ -3022,23 +3022,31 @@ function renderServis(q) {
   }
   el.innerHTML = data.map(s => {
     const m = DB.motors.find(x => x.id === s.motorId);
-    const statusBayarColor = s.statusBayar==='Hutang Vendor'?'var(--danger)':s.statusBayar==='Sudah Dibayar'?'var(--success)':'var(--warning)';
-    return `<div class="rental-card">
+    const statusBayar = s.statusBayar || s.STATUS_PEMBAYARAN || 'Sudah Dibayar';
+    const belumBayar  = statusBayar === 'Belum Dibayar' || statusBayar === 'Hutang Vendor';
+    const statusColor = belumBayar ? 'var(--danger)' : statusBayar === 'Sudah Dibayar' ? 'var(--success)' : 'var(--warning)';
+    const borderColor = belumBayar ? 'var(--danger)' : 'var(--border)';
+    return `<div class="rental-card" style="border-left:3px solid ${borderColor}">
       <div style="display:flex;justify-content:space-between;align-items:flex-start">
         <div style="flex:1;min-width:0">
           <div style="font-size:14px;font-weight:700">${s.jenisServis}</div>
-          <div style="font-size:12px;color:var(--text-muted)">${m?.nama||m?.merek+' '+m?.tipe} · ${m?.plat}</div>
-          <div style="font-size:12px;color:var(--text-muted);margin-top:2px">📅 ${formatDate(s.tanggal)}${s.km>0?' · '+s.km.toLocaleString('id-ID')+' km':''}${s.bengkel?' · 🔧 '+s.bengkel:''}</div>
+          <div style="font-size:12px;color:var(--text-muted)">${m?.nama||((m?.merek||'')+' '+(m?.tipe||''))} · ${m?.plat||''}</div>
+          <div style="font-size:12px;color:var(--text-muted);margin-top:2px">📅 ${formatDate(s.tanggal)}${s.km>0?' · '+Number(s.km).toLocaleString('id-ID')+' km':''}${s.bengkel?' · 🔧 '+s.bengkel:''}</div>
           ${s.detail?`<div style="font-size:12px;color:var(--text-secondary);margin-top:2px">${s.detail}</div>`:''}
         </div>
         <div style="text-align:right;flex-shrink:0;margin-left:8px">
-          <div style="font-size:14px;font-weight:800;color:var(--danger)">${rupiah(s.biaya)}</div>
-          ${s.statusBayar?`<div style="font-size:11px;font-weight:600;color:${statusBayarColor};margin-top:2px">${s.statusBayar}</div>`:''}
+          <div style="font-size:14px;font-weight:800;color:${s.biaya>0?'var(--danger)':'var(--text-muted)'}">${rupiah(s.biaya)}</div>
+          <div style="font-size:11px;font-weight:600;color:${statusColor};margin-top:2px">${statusBayar}</div>
           ${s.nota?`<div style="font-size:11px;color:var(--text-muted)">Nota: ${s.nota}</div>`:''}
         </div>
       </div>
-      ${s.kmBerikutnya>0?`<div style="font-size:11px;color:var(--accent);margin-top:6px;padding-top:6px;border-top:1px solid var(--border)">🔔 Servis berikutnya: ${s.kmBerikutnya.toLocaleString('id-ID')} km</div>`:''}
+      ${s.kmBerikutnya>0?`<div style="font-size:11px;color:var(--accent);margin-top:6px;padding-top:6px;border-top:1px solid var(--border)">🔔 Servis berikutnya: ${Number(s.kmBerikutnya).toLocaleString('id-ID')} km</div>`:''}
       ${s.catatan?`<div style="font-size:12px;color:var(--text-muted);margin-top:4px">${s.catatan}</div>`:''}
+      ${belumBayar && s.biaya > 0 ? `
+      <div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border);display:flex;gap:8px;align-items:center">
+        <span style="font-size:12px;color:var(--danger);font-weight:600">⚠️ Belum dibayar ${rupiah(s.biaya)}</span>
+        <button class="btn btn-primary btn-sm" style="margin-left:auto" onclick="bayarServis('${s.id}')">✅ Tandai Sudah Dibayar</button>
+      </div>` : ''}
     </div>`;
   }).join('');
 }
@@ -3091,6 +3099,53 @@ async function simpanServis() {
     if (currentPage === 'keuangan') renderKeuangan();
     if (currentPage === 'armada') renderMotor();
   } catch(e) { showToast('❌ ' + e.message); }
+}
+
+// ====================== BAYAR SERVIS ======================
+async function bayarServis(servisId) {
+  const s = DB.servis.find(x => x.id === servisId);
+  if (!s) return;
+  const m = DB.motors.find(x => x.id === s.motorId);
+  const metode = prompt(`Bayar servis ${s.jenisServis} — ${rupiah(s.biaya)}\n\nMetode pembayaran:\n1. Cash\n2. Transfer\n3. QRIS\n\nKetik nomor:`);
+  if (!metode) return;
+  const metodeMap = {'1':'Cash','2':'Transfer','3':'QRIS'};
+  const metodeBayar = metodeMap[metode.trim()] || 'Cash';
+
+  try {
+    if (isOnline()) {
+      // Update status_pembayaran di sheet SERVIS via update_service
+      await apiPost('update_service', {
+        ID: servisId,
+        STATUS_PEMBAYARAN: 'Sudah Dibayar',
+      });
+      // Catat ke keuangan
+      await apiPost('add_finance', {
+        JENIS: 'PENGELUARAN',
+        KATEGORI: 'Servis',
+        TANGGAL: new Date().toISOString().split('T')[0],
+        NOMINAL: s.biaya,
+        METODE_PEMBAYARAN: metodeBayar,
+        KETERANGAN: `Bayar servis ${m?.merek||''} ${m?.tipe||''} (${m?.plat||''}) — ${s.jenisServis}`,
+        REF_ID: servisId,
+      });
+    }
+    // Update lokal
+    s.statusBayar = 'Sudah Dibayar';
+    // Tambah ke keuangan lokal
+    DB.keuangan.push({
+      id: 'F-' + Date.now(),
+      jenis: 'PENGELUARAN', kategori: 'Servis',
+      tanggal: new Date().toISOString().split('T')[0],
+      nominal: s.biaya, metode: metodeBayar,
+      keterangan: `Bayar servis ${m?.plat||''} — ${s.jenisServis}`,
+    });
+    DB.aktivitas.unshift({ type: 'orange', teks: `Servis ${m?.plat||''} (${s.jenisServis}) sudah dibayar — ${rupiah(s.biaya)}`, waktu: 'Baru saja' });
+    showToast(`✅ Servis ${rupiah(s.biaya)} ditandai sudah dibayar`);
+    renderServis();
+    if (currentPage === 'keuangan') renderKeuangan();
+  } catch(e) {
+    showToast('❌ ' + e.message);
+  }
 }
 
 // ====================== LAPORAN ======================
@@ -3786,12 +3841,13 @@ async function loadFromBackend() {
     showToast('🔄 Memuat data dari server...');
 
     // Load semua data paralel
-    const [motors, pelanggan, sewas, dash, finData] = await Promise.all([
+    const [motors, pelanggan, sewas, dash, finData, servisData] = await Promise.all([
       apiGet('motors'),
       apiGet('customers'),
       apiGet('rentals'),
       apiGet('dashboard'),
       apiGet('finance'),
+      apiGet('servis').catch(() => []),
     ]);
 
     // Normalisasi motors ke format lokal (lengkap)
@@ -3847,6 +3903,26 @@ async function loadFromBackend() {
         nominal: Number(f.NOMINAL||0),
         metode: f.METODE_PEMBAYARAN||'',
         keterangan: f.KETERANGAN, refId: f.REF_ID,
+      }));
+    }
+
+    // Normalisasi servis
+    if (servisData && servisData.length > 0) {
+      DB.servis = servisData.map(s => ({
+        id: s.ID, motorId: s.MOTOR_ID,
+        tanggal: fmtDateLocal(s.TANGGAL),
+        km: Number(s.KILOMETER||0),
+        jenisServis: s.JENIS_SERVIS,
+        detail: s.DETAIL_SERVIS||'',
+        biaya: Number(s.BIAYA||0),
+        bengkel: s.BENGKEL||'',
+        hpBengkel: s.HP_BENGKEL||'',
+        kmBerikutnya: Number(s.KM_BERIKUTNYA||0),
+        nota: s.ADA_NOTA||'',
+        statusBayar: s.STATUS_PEMBAYARAN||'Sudah Dibayar',
+        jatuhTempo: s.TANGGAL_JATUH_TEMPO||'',
+        status: s.STATUS||'SELESAI',
+        catatan: s.CATATAN||'',
       }));
     }
 

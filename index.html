@@ -6,33 +6,38 @@
 <title>DNS Rental Motor</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
   :root {
-    --bg: #F7F8FA;
+    --bg: #F8F9FB;
     --surface: #FFFFFF;
-    --surface-2: #F0F2F5;
-    --border: #E4E7EC;
+    --surface-2: #F3F4F6;
+    --border: #E5E7EB;
     --text-primary: #111827;
     --text-secondary: #6B7280;
     --text-muted: #9CA3AF;
-    --accent: #2563EB;
-    --accent-light: #EFF6FF;
-    --accent-dark: #1D4ED8;
+
+    /* Accent merah */
+    --accent: #E11D48;
+    --accent-light: #FFF1F2;
+    --accent-dark: #BE123C;
+
     --success: #16A34A;
     --success-light: #F0FDF4;
     --warning: #D97706;
     --warning-light: #FFFBEB;
-    --danger: #DC2626;
+    --danger: #991B1B;
     --danger-light: #FEF2F2;
     --orange: #EA580C;
     --orange-light: #FFF7ED;
     --purple: #7C3AED;
     --purple-light: #F5F3FF;
+
     --radius: 12px;
     --radius-sm: 8px;
-    --shadow: 0 1px 3px rgba(0,0,0,.08), 0 1px 2px rgba(0,0,0,.04);
-    --shadow-md: 0 4px 12px rgba(0,0,0,.08);
+    --shadow: 0 1px 4px rgba(0,0,0,.06), 0 1px 2px rgba(0,0,0,.04);
+    --shadow-md: 0 4px 16px rgba(0,0,0,.08);
+    --shadow-lg: 0 8px 32px rgba(225,29,72,.12);
     --nav-h: 64px;
     --sidebar-w: 240px;
     --safe-bottom: env(safe-area-inset-bottom, 0px);
@@ -41,7 +46,7 @@
 
   * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
 
-  html, body { height: 100%; background: var(--bg); color: var(--text-primary); font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif; }
+  html, body { height: 100%; background: var(--bg); color: var(--text-primary); font-family: 'Poppins', system-ui, -apple-system, sans-serif; }
 
   /* LAYOUT */
   .app { display: flex; height: 100%; }
@@ -60,38 +65,39 @@
     overflow-y: auto;
   }
   .sidebar-logo {
-    padding: 20px 20px 16px;
+    padding: 18px 16px 14px;
     display: flex;
     align-items: center;
     gap: 10px;
     border-bottom: 1px solid var(--border);
   }
   .sidebar-logo .logo-icon {
-    width: 36px; height: 36px;
-    background: var(--accent);
+    width: 38px; height: 38px;
+    background: linear-gradient(135deg, var(--accent) 0%, var(--accent-dark) 100%);
     border-radius: 10px;
     display: flex; align-items: center; justify-content: center;
-    font-size: 18px;
+    font-size: 20px;
+    box-shadow: 0 2px 8px rgba(225,29,72,.3);
   }
-  .sidebar-logo .logo-text { font-size: 16px; font-weight: 700; color: var(--text-primary); }
-  .sidebar-logo .logo-sub { font-size: 11px; color: var(--text-muted); }
-  .sidebar-nav { padding: 12px 10px; flex: 1; }
+  .sidebar-logo .logo-text { font-size: 14px; font-weight: 700; color: var(--text-primary); line-height: 1.2; }
+  .sidebar-logo .logo-sub { font-size: 10px; color: var(--text-muted); }
+  .sidebar-nav { padding: 10px 8px; flex: 1; }
   .nav-section-label {
-    font-size: 10px;
+    font-size: 9px;
     font-weight: 600;
     color: var(--text-muted);
-    letter-spacing: .06em;
-    padding: 8px 10px 4px;
+    letter-spacing: .08em;
+    padding: 10px 10px 4px;
     text-transform: uppercase;
   }
   .nav-item {
     display: flex;
     align-items: center;
     gap: 10px;
-    padding: 9px 10px;
+    padding: 9px 12px;
     border-radius: var(--radius-sm);
     cursor: pointer;
-    font-size: 14px;
+    font-size: 13px;
     font-weight: 500;
     color: var(--text-secondary);
     transition: background .15s, color .15s;
@@ -100,13 +106,26 @@
     background: none;
     width: 100%;
     text-align: left;
+    position: relative;
   }
   .nav-item:hover { background: var(--surface-2); color: var(--text-primary); }
-  .nav-item.active { background: var(--accent-light); color: var(--accent); }
-  .nav-item .nav-icon { font-size: 16px; width: 20px; text-align: center; }
+  .nav-item.active {
+    background: var(--accent-light);
+    color: var(--accent);
+    font-weight: 600;
+  }
+  .nav-item.active::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 4px; bottom: 4px;
+    width: 3px;
+    background: var(--accent);
+    border-radius: 0 3px 3px 0;
+  }
+  .nav-item .nav-icon { font-size: 15px; width: 20px; text-align: center; flex-shrink: 0; }
   .nav-badge {
     margin-left: auto;
-    background: var(--danger);
+    background: var(--accent);
     color: #fff;
     font-size: 10px;
     font-weight: 700;
@@ -136,7 +155,7 @@
     padding-top: var(--safe-top);
   }
   .topbar-brand { display: flex; align-items: center; gap: 8px; }
-  .topbar-brand .logo-icon { width: 30px; height: 30px; background: var(--accent); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 15px; }
+  .topbar-brand .logo-icon { width: 30px; height: 30px; background: linear-gradient(135deg, var(--accent), var(--accent-dark)); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 15px; box-shadow: 0 2px 6px rgba(225,29,72,.3); }
   .topbar-brand span { font-size: 15px; font-weight: 700; }
   .topbar-right { display: flex; align-items: center; gap: 8px; }
   .topbar-btn { width: 36px; height: 36px; border-radius: 8px; border: 1px solid var(--border); background: none; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 16px; color: var(--text-secondary); }
@@ -173,7 +192,8 @@
   }
   .bnav-item .icon { font-size: 20px; line-height: 1; }
   .bnav-item.active { color: var(--accent); }
-  .bnav-item.active .icon { transform: scale(1.05); }
+  .bnav-item.active .icon { transform: scale(1.08); }
+  .bnav-item:hover { color: var(--accent); }
 
   /* PAGE HEADER */
   .page-header { padding: 20px 16px 8px; }
@@ -205,13 +225,14 @@
   /* FINANCE STRIP */
   .finance-strip {
     margin: 0 16px 16px;
-    background: linear-gradient(135deg, #1E40AF 0%, #2563EB 100%);
+    background: linear-gradient(135deg, #9F1239 0%, #E11D48 60%, #FB7185 100%);
     border-radius: var(--radius);
-    padding: 16px;
+    padding: 18px 16px;
     color: #fff;
     display: grid;
     grid-template-columns: repeat(3, 1fr);
     gap: 8px;
+    box-shadow: var(--shadow-lg);
   }
   .fin-item { text-align: center; }
   .fin-label { font-size: 10px; opacity: .75; font-weight: 500; }
@@ -410,7 +431,7 @@
     transition: border-color .15s;
     font-family: inherit;
   }
-  .form-control:focus { border-color: var(--accent); }
+  .form-control:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(225,29,72,.1); outline: none; }
   .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
   .form-actions { display: flex; gap: 8px; margin-top: 16px; }
   .btn {
@@ -424,10 +445,12 @@
     transition: all .15s;
     font-family: inherit;
   }
-  .btn-primary { background: var(--accent); color: #fff; }
-  .btn-primary:hover { background: var(--accent-dark); }
+  .btn-primary { background: var(--accent); color: #fff; box-shadow: 0 2px 8px rgba(225,29,72,.25); }
+  .btn-primary:hover { background: var(--accent-dark); box-shadow: 0 4px 12px rgba(225,29,72,.35); }
   .btn-secondary { background: var(--surface-2); color: var(--text-primary); border: 1px solid var(--border); }
+  .btn-secondary:hover { background: var(--border); }
   .btn-danger { background: var(--danger); color: #fff; }
+  .btn-danger:hover { background: #7f1d1d; }
   .btn-sm { padding: 7px 12px; font-size: 12px; flex: none; }
 
   /* DETAIL MODAL */
@@ -464,8 +487,9 @@
   /* FILTER CHIPS */
   .filter-chips { display: flex; gap: 6px; overflow-x: auto; padding: 0 16px 12px; scrollbar-width: none; }
   .filter-chips::-webkit-scrollbar { display: none; }
-  .chip { padding: 6px 12px; border-radius: 99px; font-size: 12px; font-weight: 600; cursor: pointer; border: 1.5px solid var(--border); background: var(--surface); color: var(--text-secondary); white-space: nowrap; transition: all .15s; }
-  .chip.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .chip { padding: 6px 14px; border-radius: 99px; font-size: 12px; font-weight: 500; cursor: pointer; border: 1.5px solid var(--border); background: var(--surface); color: var(--text-secondary); white-space: nowrap; transition: all .15s; }
+  .chip:hover { border-color: var(--accent); color: var(--accent); }
+  .chip.active { background: var(--accent); border-color: var(--accent); color: #fff; box-shadow: 0 2px 8px rgba(225,29,72,.25); }
 
   /* EMPTY STATE */
   .empty-state { text-align: center; padding: 48px 24px; }
@@ -480,17 +504,17 @@
     right: 16px;
     width: 52px; height: 52px;
     border-radius: 50%;
-    background: var(--accent);
+    background: linear-gradient(135deg, var(--accent), var(--accent-dark));
     color: #fff;
     border: none;
     font-size: 24px;
     cursor: pointer;
     display: flex; align-items: center; justify-content: center;
-    box-shadow: 0 4px 16px rgba(37, 99, 235, .4);
+    box-shadow: 0 4px 16px rgba(225,29,72,.45);
     z-index: 90;
-    transition: transform .15s;
+    transition: transform .15s, box-shadow .15s;
   }
-  .fab:hover { transform: scale(1.05); }
+  .fab:hover { transform: scale(1.08); box-shadow: 0 6px 20px rgba(225,29,72,.55); }
 
   /* TOAST */
   .toast {
@@ -557,7 +581,7 @@
   /* ── LOGIN SCREEN ── */
   .login-screen {
     position: fixed; inset: 0; z-index: 9999;
-    background: linear-gradient(135deg, #1E3A8A 0%, #2563EB 60%, #3B82F6 100%);
+    background: linear-gradient(135deg, #4C0519 0%, #9F1239 40%, #E11D48 100%);
     display: flex; align-items: center; justify-content: center;
     padding: 24px;
   }
@@ -571,11 +595,12 @@
   }
   .login-logo { text-align: center; margin-bottom: 28px; }
   .login-logo .icon {
-    width: 64px; height: 64px;
-    background: var(--accent);
-    border-radius: 18px;
+    width: 68px; height: 68px;
+    background: linear-gradient(135deg, var(--accent) 0%, var(--accent-dark) 100%);
+    border-radius: 20px;
     display: inline-flex; align-items: center; justify-content: center;
-    font-size: 32px; margin-bottom: 12px;
+    font-size: 34px; margin-bottom: 14px;
+    box-shadow: 0 8px 24px rgba(225,29,72,.4);
   }
   .login-logo .name { font-size: 20px; font-weight: 800; color: var(--text-primary); }
   .login-logo .sub  { font-size: 13px; color: var(--text-muted); margin-top: 2px; }
@@ -608,12 +633,13 @@
   .user-role { font-size: 11px; color: var(--text-muted); }
   .btn-logout {
     width: 100%; margin-top: 6px; padding: 8px;
-    background: var(--danger-light); color: var(--danger);
+    background: var(--accent-light); color: var(--accent);
     border: none; border-radius: var(--radius-sm);
-    font-size: 13px; font-weight: 600; cursor: pointer;
+    font-size: 12px; font-weight: 600; cursor: pointer;
     display: flex; align-items: center; justify-content: center; gap: 6px;
+    font-family: 'Poppins', sans-serif;
   }
-  .btn-logout:hover { background: var(--danger); color: #fff; }
+  .btn-logout:hover { background: var(--accent); color: #fff; }
 
   /* Upload Box */
   .upload-box {
@@ -674,14 +700,14 @@
   .reload-bar .countdown { font-weight: 600; color: var(--text-secondary); }
   .btn-reload {
     padding: 4px 10px; border-radius: 99px;
-    border: 1.5px solid var(--border);
+    border: 1.5px solid var(--accent);
     background: none; font-size: 11px; font-weight: 600;
     color: var(--accent); cursor: pointer;
     display: flex; align-items: center; gap: 4px;
-    white-space: nowrap; font-family: inherit;
+    white-space: nowrap; font-family: 'Poppins', sans-serif;
     transition: all .15s;
   }
-  .btn-reload:hover { background: var(--accent-light); border-color: var(--accent); }
+  .btn-reload:hover { background: var(--accent); color: #fff; }
   .btn-reload.spinning .reload-icon { display: inline-block; animation: spin .6s linear infinite; }
   @keyframes spin { to { transform: rotate(360deg); } }
 
@@ -963,27 +989,30 @@
 
     <!-- ===================== KEUANGAN ===================== -->
     <div id="page-keuangan" class="page">
-      <div class="page-header">
-        <div class="page-title">Keuangan</div>
-        <div class="page-sub">Pemasukan & pengeluaran usaha</div>
+      <div class="page-header" style="display:flex;align-items:flex-start;justify-content:space-between">
+        <div>
+          <div class="page-title">Keuangan</div>
+          <div class="page-sub">Pemasukan & pengeluaran usaha</div>
+        </div>
+        <button class="btn btn-primary btn-sm" style="margin-top:4px;flex:none" onclick="openModal('modal-tambah-keuangan')">+ Catat</button>
       </div>
-      <!-- Ringkasan strip -->
-      <div class="finance-strip" id="fin-strip">
-        <div class="fin-item">
-          <div class="fin-label">Pemasukan</div>
-          <div class="fin-val" id="fin-total-masuk">-</div>
+
+      <!-- Card ringkasan 3 kolom -->
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;padding:0 16px 16px">
+        <div style="background:var(--surface);border-radius:var(--radius);padding:14px;box-shadow:var(--shadow);border-top:3px solid var(--success)">
+          <div style="font-size:10px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">Masuk</div>
+          <div style="font-size:17px;font-weight:800;color:var(--success)" id="fin-total-masuk">-</div>
         </div>
-        <div class="fin-divider"></div>
-        <div class="fin-item">
-          <div class="fin-label">Pengeluaran</div>
-          <div class="fin-val" id="fin-total-keluar">-</div>
+        <div style="background:var(--surface);border-radius:var(--radius);padding:14px;box-shadow:var(--shadow);border-top:3px solid var(--danger)">
+          <div style="font-size:10px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">Keluar</div>
+          <div style="font-size:17px;font-weight:800;color:var(--danger)" id="fin-total-keluar">-</div>
         </div>
-        <div class="fin-divider"></div>
-        <div class="fin-item">
-          <div class="fin-label">Laba</div>
-          <div class="fin-val" id="fin-total-laba">-</div>
+        <div style="background:var(--surface);border-radius:var(--radius);padding:14px;box-shadow:var(--shadow);border-top:3px solid var(--accent)">
+          <div style="font-size:10px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">Laba</div>
+          <div style="font-size:17px;font-weight:800;color:var(--accent)" id="fin-total-laba">-</div>
         </div>
       </div>
+
       <!-- Filter periode -->
       <div class="filter-chips">
         <button class="chip fin-chip-periode active" onclick="filterFinPeriode('bulan',this)">Bulan Ini</button>
@@ -997,10 +1026,11 @@
         <button class="chip fin-chip-jenis" onclick="filterFinJenis('PEMASUKAN',this)">Pemasukan</button>
         <button class="chip fin-chip-jenis" onclick="filterFinJenis('PENGELUARAN',this)">Pengeluaran</button>
       </div>
+
+      <!-- List dalam scroll container -->
       <div class="section">
-        <div id="fin-list"></div>
+        <div id="fin-list" style="max-height:calc(100vh - 340px);overflow-y:auto;padding-right:2px"></div>
       </div>
-      <button class="fab" onclick="openModal('modal-tambah-keuangan')">＋</button>
     </div>
 
     <!-- ===================== SERVIS ===================== -->
@@ -1042,25 +1072,40 @@
         <button class="chip lap-chip" onclick="filterLaporan('custom',this)">📅 Custom</button>
       </div>
       <!-- Rentang tanggal custom -->
-      <div id="lap-custom-range" style="display:none;margin-top:10px;display:none;gap:8px;align-items:center;flex-wrap:wrap">
+      <div id="lap-custom-range" style="display:none;padding:0 16px 12px;gap:8px;align-items:center;flex-wrap:wrap">
         <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
           <div style="display:flex;align-items:center;gap:6px">
             <label style="font-size:12px;color:var(--text-muted);white-space:nowrap">Dari</label>
-            <input type="date" id="lap-dari" style="padding:6px 10px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:13px;background:var(--surface)" onchange="renderLaporan()">
+            <input type="date" id="lap-dari" style="padding:6px 10px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:13px;background:var(--surface);font-family:inherit" onchange="renderLaporan()">
           </div>
           <div style="display:flex;align-items:center;gap:6px">
             <label style="font-size:12px;color:var(--text-muted);white-space:nowrap">Sampai</label>
-            <input type="date" id="lap-sampai" style="padding:6px 10px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:13px;background:var(--surface)" onchange="renderLaporan()">
+            <input type="date" id="lap-sampai" style="padding:6px 10px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:13px;background:var(--surface);font-family:inherit" onchange="renderLaporan()">
           </div>
         </div>
       </div>
-      <!-- Ringkasan -->
-      <div class="stat-grid" id="lap-stat-grid">
-        <div class="stat-card accent"><div class="stat-label">Total Rental</div><div class="stat-value" id="lap-total-rental">-</div></div>
-        <div class="stat-card success"><div class="stat-label">Pemasukan</div><div class="stat-value" id="lap-pemasukan" style="font-size:16px">-</div></div>
-        <div class="stat-card warning"><div class="stat-label">Pengeluaran</div><div class="stat-value" id="lap-pengeluaran" style="font-size:16px">-</div></div>
-        <div class="stat-card orange"><div class="stat-label">Laba Bersih</div><div class="stat-value" id="lap-laba" style="font-size:16px">-</div></div>
+
+      <!-- Stat cards bergaya dashboard -->
+      <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px;padding:0 16px 16px" id="lap-stat-grid">
+        <div style="background:var(--surface);border-radius:var(--radius);padding:16px;box-shadow:var(--shadow);border-left:4px solid var(--accent)">
+          <div style="font-size:10px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.05em">Total Rental</div>
+          <div style="font-size:28px;font-weight:800;color:var(--accent);margin-top:4px;line-height:1" id="lap-total-rental">-</div>
+          <div style="font-size:11px;color:var(--text-muted);margin-top:2px">transaksi</div>
+        </div>
+        <div style="background:var(--surface);border-radius:var(--radius);padding:16px;box-shadow:var(--shadow);border-left:4px solid var(--success)">
+          <div style="font-size:10px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.05em">Pemasukan</div>
+          <div style="font-size:20px;font-weight:800;color:var(--success);margin-top:4px;line-height:1" id="lap-pemasukan">-</div>
+        </div>
+        <div style="background:var(--surface);border-radius:var(--radius);padding:16px;box-shadow:var(--shadow);border-left:4px solid var(--danger)">
+          <div style="font-size:10px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.05em">Pengeluaran</div>
+          <div style="font-size:20px;font-weight:800;color:var(--danger);margin-top:4px;line-height:1" id="lap-pengeluaran">-</div>
+        </div>
+        <div style="background:linear-gradient(135deg,var(--accent-dark),var(--accent));border-radius:var(--radius);padding:16px;box-shadow:var(--shadow-lg)">
+          <div style="font-size:10px;font-weight:600;color:rgba(255,255,255,.7);text-transform:uppercase;letter-spacing:.05em">Laba Bersih</div>
+          <div style="font-size:20px;font-weight:800;color:#fff;margin-top:4px;line-height:1" id="lap-laba">-</div>
+        </div>
       </div>
+
       <!-- Grafik pemasukan -->
       <div class="section">
         <div class="section-header"><div class="section-title">Tren Pemasukan (7 Hari)</div></div>
@@ -1068,13 +1113,16 @@
           <canvas id="chart-tren" height="160"></canvas>
         </div>
       </div>
-      <!-- Mutasi Keuangan -->
+
+      <!-- Mutasi Keuangan dengan scroll container -->
       <div class="section">
         <div class="section-header">
           <div class="section-title">Mutasi Keuangan</div>
           <span id="lap-jml-transaksi" style="font-size:12px;color:var(--text-muted)"></span>
         </div>
-        <div id="lap-mutasi-list"></div>
+        <div style="background:var(--surface);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden">
+          <div id="lap-mutasi-list" style="max-height:400px;overflow-y:auto"></div>
+        </div>
       </div>
       <!-- Top motor -->
       <div class="section">
@@ -3092,11 +3140,7 @@ function getPeriodRange(periode) {
   }
 
   if (periode === 'bulan') {
-    // Akhir bulan = hari terakhir bulan ini (bukan hari ini)
-    // agar transaksi tanggal depan dalam bulan yang sama tetap masuk
-    const lastDay = new Date(now.getFullYear(), now.getMonth()+1, 0);
-    const ld = String(lastDay.getDate()).padStart(2,'0');
-    return { dari: `${y}-${m}-01`, sampai: `${y}-${m}-${ld}` };
+    return { dari: `${y}-${m}-01`, sampai: today };
   }
 
   if (periode === 'custom') {
@@ -3140,19 +3184,28 @@ function renderKeuangan() {
     el.innerHTML = `<div class="empty-state"><div class="empty-icon">💰</div><div class="empty-title">Belum ada transaksi</div><div class="empty-sub">Tambah pemasukan atau pengeluaran dengan tombol +</div></div>`;
     return;
   }
-  el.innerHTML = data.map(f => `
-    <div class="rental-card" style="border-left:3px solid ${f.jenis==='PEMASUKAN'?'var(--success)':'var(--danger)'}">
-      <div style="display:flex;justify-content:space-between;align-items:flex-start">
-        <div>
-          <div style="font-size:14px;font-weight:700">${f.kategori}</div>
-          <div style="font-size:12px;color:var(--text-muted)">${f.keterangan||'-'} · ${formatDate(f.tanggal)}</div>
-        </div>
-        <div style="font-size:15px;font-weight:800;color:${f.jenis==='PEMASUKAN'?'var(--success)':'var(--danger)'}">
-          ${f.jenis==='PEMASUKAN'?'+':'-'}${rupiah(f.nominal)}
-        </div>
+  const katIcon = {
+    'DP Sewa':'🏍','Pelunasan Sewa':'✅','Perpanjangan Sewa':'🔄','Denda Keterlambatan':'⏰',
+    'Pembayaran Sewa':'💳','Pendapatan Lain':'💵',
+    'Servis':'🔧','Sparepart':'⚙️','BBM':'⛽','Pajak':'📋','Cuci Motor':'🚿',
+    'Gaji':'👷','Operasional':'🏢','Lainnya':'📌','Reversal':'↩️',
+  };
+  el.innerHTML = data.map(f => {
+    const isMasuk = f.jenis === 'PEMASUKAN';
+    const icon = katIcon[f.kategori] || (isMasuk ? '💰' : '💸');
+    return `<div style="display:flex;align-items:center;gap:12px;padding:12px;background:var(--surface);border-radius:var(--radius-sm);margin-bottom:6px;box-shadow:var(--shadow);border-left:3px solid ${isMasuk?'var(--success)':'var(--danger)'}">
+      <div style="width:38px;height:38px;border-radius:10px;background:${isMasuk?'var(--success-light)':'var(--danger-light)'};display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">${icon}</div>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:13px;font-weight:600;color:var(--text-primary)">${f.kategori}</div>
+        <div style="font-size:11px;color:var(--text-muted);margin-top:1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${f.keterangan||'-'}</div>
+        <div style="font-size:10px;color:var(--text-muted);margin-top:1px">${formatDate(f.tanggal)}</div>
       </div>
-      <div style="margin-top:6px">${badgeHtml(f.jenis==='PEMASUKAN'?'TERSEDIA':'RUSAK').replace('TERSEDIA','PEMASUKAN').replace('RUSAK','PENGELUARAN')}</div>
-    </div>`).join('');
+      <div style="text-align:right;flex-shrink:0">
+        <div style="font-size:14px;font-weight:800;color:${isMasuk?'var(--success)':'var(--danger)'}">${isMasuk?'+':'-'}${rupiah(f.nominal)}</div>
+        <div style="margin-top:3px"><span style="font-size:10px;font-weight:600;padding:2px 7px;border-radius:99px;background:${isMasuk?'var(--success-light)':'var(--danger-light)'};color:${isMasuk?'var(--success)':'var(--danger)'}">${isMasuk?'MASUK':'KELUAR'}</span></div>
+      </div>
+    </div>`;
+  }).join('');
 }
 
 function rupiahSingkat(n) {
@@ -3534,42 +3587,42 @@ function renderLaporan() {
   const finsSorted = [...fins].sort((a,b) => (a.tanggal||'').localeCompare(b.tanggal||''));
   if (mutasiEl) {
     if (finsSorted.length === 0) {
-      mutasiEl.innerHTML = `<div style="font-size:13px;color:var(--text-muted);padding:12px 0">Belum ada transaksi keuangan di periode ini.</div>`;
+      mutasiEl.innerHTML = `<div style="text-align:center;padding:32px;color:var(--text-muted);font-size:13px">Belum ada transaksi di periode ini.</div>`;
     } else {
       let saldo = 0;
       mutasiEl.innerHTML = `
         <div style="overflow-x:auto">
-          <table style="width:100%;border-collapse:collapse;font-size:12px">
-            <thead>
-              <tr style="background:var(--surface-2);text-align:left">
-                <th style="padding:8px 6px;border-bottom:2px solid var(--border);white-space:nowrap">Tanggal</th>
-                <th style="padding:8px 6px;border-bottom:2px solid var(--border)">Keterangan</th>
-                <th style="padding:8px 6px;border-bottom:2px solid var(--border);text-align:right;white-space:nowrap">Masuk</th>
-                <th style="padding:8px 6px;border-bottom:2px solid var(--border);text-align:right;white-space:nowrap">Keluar</th>
-                <th style="padding:8px 6px;border-bottom:2px solid var(--border);text-align:right;white-space:nowrap">Saldo</th>
+          <table style="width:100%;border-collapse:collapse;font-size:12px;font-family:'Poppins',sans-serif">
+            <thead style="position:sticky;top:0;z-index:2">
+              <tr style="background:linear-gradient(135deg,var(--accent-dark),var(--accent));color:#fff;text-align:left">
+                <th style="padding:10px 10px;white-space:nowrap;font-weight:600">Tanggal</th>
+                <th style="padding:10px 10px;font-weight:600">Keterangan</th>
+                <th style="padding:10px 10px;text-align:right;white-space:nowrap;font-weight:600">Masuk</th>
+                <th style="padding:10px 10px;text-align:right;white-space:nowrap;font-weight:600">Keluar</th>
+                <th style="padding:10px 10px;text-align:right;white-space:nowrap;font-weight:600">Saldo</th>
               </tr>
             </thead>
             <tbody>
-              ${finsSorted.map(f => {
+              ${finsSorted.map((f, idx) => {
                 const masukVal  = f.jenis === 'PEMASUKAN'   ? Number(f.nominal||0) : 0;
                 const keluarVal = f.jenis === 'PENGELUARAN' ? Number(f.nominal||0) : 0;
                 saldo += masukVal - keluarVal;
-                return `<tr style="border-bottom:1px solid var(--border)">
-                  <td style="padding:7px 6px;white-space:nowrap;color:var(--text-muted)">${formatDate(f.tanggal)}</td>
-                  <td style="padding:7px 6px">
-                    <div style="font-weight:600">${f.kategori}</div>
-                    <div style="color:var(--text-muted);font-size:11px">${f.keterangan||''}</div>
+                return `<tr style="border-bottom:1px solid var(--border);background:${idx%2===0?'var(--surface)':'var(--bg)'};transition:background .1s" onmouseover="this.style.background='var(--accent-light)'" onmouseout="this.style.background='${idx%2===0?'var(--surface)':'var(--bg)'}'">
+                  <td style="padding:8px 10px;white-space:nowrap;color:var(--text-muted);font-size:11px">${formatDate(f.tanggal)}</td>
+                  <td style="padding:8px 10px">
+                    <div style="font-weight:600;color:var(--text-primary)">${f.kategori}</div>
+                    <div style="color:var(--text-muted);font-size:10px;margin-top:1px">${f.keterangan||''}</div>
                   </td>
-                  <td style="padding:7px 6px;text-align:right;color:var(--success);font-weight:600">${masukVal>0?rupiah(masukVal):''}</td>
-                  <td style="padding:7px 6px;text-align:right;color:var(--danger);font-weight:600">${keluarVal>0?rupiah(keluarVal):''}</td>
-                  <td style="padding:7px 6px;text-align:right;font-weight:700;color:${saldo>=0?'var(--accent)':'var(--danger)'}">${rupiah(saldo)}</td>
+                  <td style="padding:8px 10px;text-align:right;color:var(--success);font-weight:700">${masukVal>0?'+'+rupiah(masukVal):''}</td>
+                  <td style="padding:8px 10px;text-align:right;color:var(--danger);font-weight:700">${keluarVal>0?'-'+rupiah(keluarVal):''}</td>
+                  <td style="padding:8px 10px;text-align:right;font-weight:800;color:${saldo>=0?'var(--accent)':'var(--danger)'}">${rupiah(saldo)}</td>
                 </tr>`;
               }).join('')}
-              <tr style="background:var(--surface-2);font-weight:800">
-                <td colspan="2" style="padding:8px 6px">TOTAL</td>
-                <td style="padding:8px 6px;text-align:right;color:var(--success)">${rupiah(masuk)}</td>
-                <td style="padding:8px 6px;text-align:right;color:var(--danger)">${rupiah(keluar)}</td>
-                <td style="padding:8px 6px;text-align:right;color:${masuk-keluar>=0?'var(--accent)':'var(--danger)'}">${rupiah(masuk-keluar)}</td>
+              <tr style="background:var(--surface-2);font-weight:700;border-top:2px solid var(--border)">
+                <td colspan="2" style="padding:10px 10px;font-size:12px;color:var(--text-secondary)">Total periode ini</td>
+                <td style="padding:10px 10px;text-align:right;color:var(--success);font-size:13px">+${rupiah(masuk)}</td>
+                <td style="padding:10px 10px;text-align:right;color:var(--danger);font-size:13px">-${rupiah(keluar)}</td>
+                <td style="padding:10px 10px;text-align:right;color:${masuk-keluar>=0?'var(--accent)':'var(--danger)'};font-size:13px">${rupiah(masuk-keluar)}</td>
               </tr>
             </tbody>
           </table>

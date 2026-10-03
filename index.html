@@ -1370,6 +1370,35 @@
         </div>
       </div>
 
+      <!-- Kelola Akun — hanya OWNER -->
+      <div class="section" id="section-kelola-akun" style="display:none">
+        <div class="card-title">👥 Kelola Akun</div>
+        <div class="card">
+          <!-- Daftar akun -->
+          <div id="akun-list" style="margin-bottom:14px"></div>
+          <!-- Tambah akun baru -->
+          <div style="border-top:1px solid var(--border);padding-top:14px">
+            <div style="font-size:13px;font-weight:600;color:var(--text-primary);margin-bottom:10px">Tambah Akun Baru</div>
+            <div class="form-group">
+              <label class="form-label">Username</label>
+              <input class="form-control" id="akun-username" placeholder="Nama pengguna" autocomplete="off">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Password</label>
+              <input class="form-control" id="akun-password" type="password" placeholder="Minimal 6 karakter">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Role</label>
+              <select class="form-control" id="akun-role">
+                <option value="STAFF">STAFF — Operasional saja</option>
+                <option value="ADMIN">ADMIN — Semua kecuali kelola akun</option>
+              </select>
+            </div>
+            <button class="btn btn-primary" onclick="tambahAkun()">Tambah Akun</button>
+          </div>
+        </div>
+      </div>
+
       <!-- Ganti Password -->
       <div class="section">
         <div class="card-title">🔑 Ganti Password</div>
@@ -2202,6 +2231,7 @@ function showPage(page) {
   if (page === 'servis') { populateServisMotor(); renderServis(); }
   if (page === 'laporan') renderLaporan();
   if (page === 'perizinan') renderPerizinan();
+  if (page === 'pengaturan') loadAkun();
   // scroll to top
   document.getElementById('page-' + page).scrollTop = 0;
 }
@@ -4289,6 +4319,84 @@ async function doLogout() {
   document.getElementById('login-user').value = '';
   document.getElementById('login-pass').value = '';
   showToast('👋 Berhasil keluar');
+}
+
+// ====================== KELOLA AKUN (OWNER only) ======================
+async function loadAkun() {
+  const role = sessionStorage.getItem('dns_session_role');
+  const section = document.getElementById('section-kelola-akun');
+  if (role !== 'OWNER') { if (section) section.style.display = 'none'; return; }
+  if (section) section.style.display = 'block';
+
+  const el = document.getElementById('akun-list');
+  el.innerHTML = '<div style="color:var(--text-muted);font-size:13px">🔄 Memuat...</div>';
+  try {
+    const data = await apiGet('manage_accounts', { op: 'list' });
+    if (!data || data.length === 0) {
+      el.innerHTML = '<div style="color:var(--text-muted);font-size:13px">Belum ada akun lain.</div>';
+      return;
+    }
+    const currentUser = sessionStorage.getItem('dns_session_user');
+    el.innerHTML = data.map(a => {
+      const isMe = a.username === currentUser;
+      const roleColor = a.role === 'OWNER' ? 'var(--accent)' : a.role === 'ADMIN' ? 'var(--warning)' : 'var(--success)';
+      const disabled = a.disabled === true || a.disabled === 'true' || a.DISABLED === true;
+      return `<div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border)">
+        <div style="width:36px;height:36px;border-radius:50%;background:${roleColor};color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;flex-shrink:0;opacity:${disabled?0.4:1}">${a.username.charAt(0).toUpperCase()}</div>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:13px;font-weight:600;color:${disabled?'var(--text-muted)':'var(--text-primary)'}">${esc(a.username)}${isMe?' (saya)':''}</div>
+          <div style="font-size:11px;font-weight:600;color:${roleColor}">${a.role}${disabled?' · Dinonaktifkan':''}</div>
+        </div>
+        ${!isMe ? `<div style="display:flex;gap:6px">
+          <button class="btn btn-secondary btn-sm" style="font-size:11px" onclick="resetPasswordAkun('${esc(a.username)}')">Reset PW</button>
+          <button class="btn btn-sm" style="font-size:11px;background:${disabled?'var(--success-light)':'var(--danger-light)'};color:${disabled?'var(--success)':'var(--danger)'};border:none" onclick="toggleAkun('${esc(a.username)}',${disabled})">${disabled?'Aktifkan':'Nonaktifkan'}</button>
+        </div>` : ''}
+      </div>`;
+    }).join('');
+  } catch(e) {
+    el.innerHTML = `<div style="color:var(--danger);font-size:13px">❌ ${e.message}</div>`;
+  }
+}
+
+async function tambahAkun() {
+  const username = document.getElementById('akun-username').value.trim();
+  const password = document.getElementById('akun-password').value;
+  const role     = document.getElementById('akun-role').value;
+  if (!username) { showToast('⚠️ Username wajib diisi'); return; }
+  if (password.length < 6) { showToast('⚠️ Password minimal 6 karakter'); return; }
+  try {
+    const passHash = await hashPassword(password);
+    await apiPost('manage_accounts', { op: 'add', username, passHash, role });
+    document.getElementById('akun-username').value = '';
+    document.getElementById('akun-password').value = '';
+    showToast(`✅ Akun "${username}" berhasil dibuat`);
+    loadAkun();
+  } catch(e) { showToast('❌ ' + e.message); }
+}
+
+async function resetPasswordAkun(username) {
+  const newPass = prompt(`Reset password untuk "${username}":\n\nMasukkan password baru (min 6 karakter):`);
+  if (!newPass) return;
+  if (newPass.length < 6) { showToast('⚠️ Password minimal 6 karakter'); return; }
+  if (!confirm(`Reset password akun "${username}"?`)) return;
+  try {
+    const newHash = await hashPassword(newPass);
+    await apiPost('manage_accounts', { op: 'reset_password', username, newPassHash: newHash });
+    showToast(`✅ Password "${username}" berhasil direset`);
+  } catch(e) { showToast('❌ ' + e.message); }
+}
+
+async function toggleAkun(username, currentlyDisabled) {
+  const aksi = currentlyDisabled ? 'aktifkan' : 'nonaktifkan';
+  if (!confirm(`${aksi.charAt(0).toUpperCase()+aksi.slice(1)} akun "${username}"?`)) return;
+  try {
+    await apiPost('manage_accounts', {
+      op: currentlyDisabled ? 'enable' : 'disable',
+      username,
+    });
+    showToast(`✅ Akun "${username}" berhasil di${aksi}`);
+    loadAkun();
+  } catch(e) { showToast('❌ ' + e.message); }
 }
 
 async function gantiPassword() {

@@ -2466,14 +2466,32 @@ async function ubahStatusMotor(id) {
   try {
     if (isOnline()) {
       await apiPost('update_motor', { ID: id, STATUS: next });
+      // Jika motor kembali TERSEDIA dari SERVIS, update record servis PROSES terakhir → SELESAI
+      if (next === 'TERSEDIA' && m.status === 'SERVIS') {
+        const servisProses = DB.servis
+          .filter(s => s.motorId === id && (s.status === 'PROSES' || s.statusMotor === 'PROSES'))
+          .sort((a,b) => b.tanggal > a.tanggal ? 1 : -1);
+        if (servisProses.length > 0) {
+          const svc = servisProses[0];
+          await apiPost('update_service', { ID: svc.id, STATUS: 'SELESAI' });
+          svc.status = 'SELESAI';
+          showToast(`✅ Status motor & catatan servis diupdate`);
+        } else {
+          showToast(`✅ Status motor diubah ke ${next}`);
+        }
+      } else {
+        showToast(`✅ Status motor diubah ke ${next}`);
+      }
+    } else {
+      showToast(`✅ Status motor diubah ke ${next}`);
     }
     m.status = next;
     DB.aktivitas.unshift({ type: 'orange', teks: `Status ${m.nama||m.plat} diubah ke ${next}`, waktu: 'Baru saja' });
-    showToast(`✅ Status motor diubah ke ${next}`);
     closeModal('modal-detail-motor');
     updateStats();
     renderDashboard();
     if (currentPage === 'armada') renderMotor();
+    if (currentPage === 'servis') renderServis();
   } catch(e) { showToast('❌ ' + e.message); }
 }
 
@@ -3197,6 +3215,16 @@ function renderServis(q) {
         <span style="font-size:12px;color:var(--danger);font-weight:600">⚠️ Belum dibayar ${rupiah(s.biaya)}</span>
         <button class="btn btn-primary btn-sm" style="margin-left:auto" onclick="bayarServis('${s.id}')">✅ Tandai Sudah Dibayar</button>
       </div>` : ''}
+      ${belumBayar && s.biaya === 0 ? `
+      <div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border);display:flex;gap:8px;align-items:center">
+        <span style="font-size:12px;color:var(--text-muted)">Biaya belum diketahui</span>
+        <button class="btn btn-secondary btn-sm" style="margin-left:auto" onclick="updateBiayaServis('${s.id}')">✏️ Update Biaya</button>
+        <button class="btn btn-primary btn-sm" onclick="selesaikanServis('${s.id}')">✅ Tandai Selesai (Gratis)</button>
+      </div>` : ''}
+      ${s.statusMotor === 'PROSES' || s.status === 'PROSES' ? `
+      <div style="margin-top:6px">
+        <span style="font-size:11px;background:var(--warning-light);color:var(--warning);padding:2px 8px;border-radius:99px;font-weight:600">🔧 Motor masih di bengkel</span>
+      </div>` : ''}
     </div>`;
   }).join('');
 }
@@ -3387,6 +3415,62 @@ async function bayarServis(servisId) {
   } catch(e) {
     showToast('❌ ' + e.message);
   }
+}
+
+// Update biaya servis yang belum diketahui
+async function updateBiayaServis(servisId) {
+  const s = DB.servis.find(x => x.id === servisId);
+  if (!s) return;
+  const m = DB.motors.find(x => x.id === s.motorId);
+  const inputBiaya = prompt(`Update biaya servis ${s.jenisServis}\n${m?.merek||''} ${m?.tipe||''} (${m?.plat||''})\n\nMasukkan biaya (angka):`);
+  if (!inputBiaya) return;
+  const biayaBaru = parseInt(inputBiaya.replace(/\D/g,'')) || 0;
+  if (biayaBaru <= 0) { showToast('⚠️ Biaya harus lebih dari 0'); return; }
+
+  try {
+    if (isOnline()) {
+      await apiPost('update_service', {
+        ID: servisId,
+        BIAYA: biayaBaru,
+        STATUS_PEMBAYARAN: 'Belum Dibayar',
+      });
+    }
+    s.biaya = biayaBaru;
+    s.statusBayar = 'Belum Dibayar';
+    showToast(`✅ Biaya servis diupdate: ${rupiah(biayaBaru)}`);
+    renderServis();
+  } catch(e) { showToast('❌ ' + e.message); }
+}
+
+// Tandai servis selesai dengan biaya 0 (gratis)
+async function selesaikanServis(servisId) {
+  const s = DB.servis.find(x => x.id === servisId);
+  if (!s) return;
+  const m = DB.motors.find(x => x.id === s.motorId);
+  if (!confirm(`Tandai servis "${s.jenisServis}" pada ${m?.merek||''} ${m?.plat||''} sebagai SELESAI (gratis/tanpa biaya)?`)) return;
+
+  try {
+    if (isOnline()) {
+      await apiPost('update_service', {
+        ID: servisId,
+        STATUS: 'SELESAI',
+        STATUS_PEMBAYARAN: 'Sudah Dibayar',
+        BIAYA: 0,
+      });
+      // Jika motor masih SERVIS, kembalikan ke TERSEDIA
+      if (m && m.status === 'SERVIS') {
+        await apiPost('update_motor', { ID: m.id, STATUS: 'TERSEDIA' });
+        m.status = 'TERSEDIA';
+      }
+    }
+    s.status = 'SELESAI';
+    s.statusBayar = 'Sudah Dibayar';
+    DB.aktivitas.unshift({ type: 'green', teks: `Servis ${m?.plat||''} (${s.jenisServis}) selesai`, waktu: 'Baru saja' });
+    showToast(`✅ Servis ditandai selesai`);
+    renderServis();
+    if (currentPage === 'armada') renderMotor();
+    updateStats();
+  } catch(e) { showToast('❌ ' + e.message); }
 }
 
 // ====================== LAPORAN ======================

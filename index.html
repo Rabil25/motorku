@@ -1039,6 +1039,20 @@
         <button class="chip lap-chip" onclick="filterLaporan('minggu',this)">Minggu Ini</button>
         <button class="chip lap-chip" onclick="filterLaporan('hari',this)">Hari Ini</button>
         <button class="chip lap-chip" onclick="filterLaporan('semua',this)">Semua</button>
+        <button class="chip lap-chip" onclick="filterLaporan('custom',this)">📅 Custom</button>
+      </div>
+      <!-- Rentang tanggal custom -->
+      <div id="lap-custom-range" style="display:none;margin-top:10px;display:none;gap:8px;align-items:center;flex-wrap:wrap">
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+          <div style="display:flex;align-items:center;gap:6px">
+            <label style="font-size:12px;color:var(--text-muted);white-space:nowrap">Dari</label>
+            <input type="date" id="lap-dari" style="padding:6px 10px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:13px;background:var(--surface)" onchange="renderLaporan()">
+          </div>
+          <div style="display:flex;align-items:center;gap:6px">
+            <label style="font-size:12px;color:var(--text-muted);white-space:nowrap">Sampai</label>
+            <input type="date" id="lap-sampai" style="padding:6px 10px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:13px;background:var(--surface)" onchange="renderLaporan()">
+          </div>
+        </div>
       </div>
       <!-- Ringkasan -->
       <div class="stat-grid" id="lap-stat-grid">
@@ -3078,7 +3092,17 @@ function getPeriodRange(periode) {
   }
 
   if (periode === 'bulan') {
-    return { dari: `${y}-${m}-01`, sampai: today };
+    // Akhir bulan = hari terakhir bulan ini (bukan hari ini)
+    // agar transaksi tanggal depan dalam bulan yang sama tetap masuk
+    const lastDay = new Date(now.getFullYear(), now.getMonth()+1, 0);
+    const ld = String(lastDay.getDate()).padStart(2,'0');
+    return { dari: `${y}-${m}-01`, sampai: `${y}-${m}-${ld}` };
+  }
+
+  if (periode === 'custom') {
+    const dari   = document.getElementById('lap-dari')?.value || '';
+    const sampai = document.getElementById('lap-sampai')?.value || todayLocal();
+    return { dari, sampai };
   }
 
   return { dari: '', sampai: '' }; // semua
@@ -3480,6 +3504,20 @@ function filterLaporan(p, btn) {
   lapPeriode = p;
   document.querySelectorAll('.lap-chip').forEach(c => c.classList.remove('active'));
   btn.classList.add('active');
+  const customEl = document.getElementById('lap-custom-range');
+  if (p === 'custom') {
+    customEl.style.display = 'flex';
+    // Default: dari awal bulan sampai hari ini
+    if (!document.getElementById('lap-dari').value) {
+      const now = new Date();
+      const y = now.getFullYear();
+      const m = String(now.getMonth()+1).padStart(2,'0');
+      document.getElementById('lap-dari').value = `${y}-${m}-01`;
+      document.getElementById('lap-sampai').value = todayLocal();
+    }
+  } else {
+    customEl.style.display = 'none';
+  }
   renderLaporan();
 }
 

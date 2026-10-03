@@ -404,10 +404,12 @@
     border-radius: 20px 20px 0 0;
     width: 100%;
     max-width: 600px;
-    max-height: 90vh;
+    max-height: calc(92vh - var(--safe-top));
     overflow-y: auto;
-    padding: 0 0 calc(16px + var(--safe-bottom));
+    overflow-x: hidden;
+    padding: 0 0 calc(24px + var(--safe-bottom));
     animation: slideUp .25s ease;
+    -webkit-overflow-scrolling: touch;
   }
   @keyframes slideUp { from { transform: translateY(30px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
   .modal-handle { width: 40px; height: 4px; background: var(--border); border-radius: 2px; margin: 12px auto 0; }
@@ -433,7 +435,20 @@
   }
   .form-control:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(225,29,72,.1); outline: none; }
   .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-  .form-actions { display: flex; gap: 8px; margin-top: 16px; }
+  .form-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 16px;
+    position: sticky;
+    bottom: 0;
+    background: var(--surface);
+    padding: 12px 0 4px;
+    border-top: 1px solid var(--border);
+    margin-left: -16px;
+    margin-right: -16px;
+    padding-left: 16px;
+    padding-right: 16px;
+  }
   .btn {
     padding: 12px 16px;
     border-radius: var(--radius-sm);
@@ -571,6 +586,25 @@
   }
   @media (max-width: 767px) {
     .sidebar { display: none; }
+  }
+
+  /* Mobile touch improvements */
+  @media (max-width: 767px) {
+    .btn { min-height: 48px; font-size: 15px; }
+    .btn-sm { min-height: 36px; }
+    .form-control { min-height: 48px; font-size: 16px; } /* 16px mencegah zoom di iOS */
+    select.form-control { font-size: 16px; }
+    .chip { padding: 8px 16px; font-size: 13px; min-height: 36px; }
+    .rental-card { padding: 16px; margin-bottom: 10px; }
+    .motor-card { padding: 16px; }
+    .pelanggan-card { padding: 16px; }
+    .nav-badge { font-size: 11px; padding: 3px 7px; }
+    .modal-body { padding: 16px 16px 8px; }
+    .section { padding: 0 16px 16px; }
+    .search-bar { padding: 10px 16px; }
+    .filter-chips { padding: 0 16px 10px; gap: 8px; }
+    .page-header { padding: 16px 16px 8px; }
+    .page-title { font-size: 20px; }
   }
 
   /* Scrollbar */
@@ -1160,6 +1194,107 @@
     </div>
 
     <!-- ===================== PENGATURAN ===================== -->
+    <!-- ===================== LAINNYA (mobile menu hub) ===================== -->
+    <div id="page-lainnya" class="page">
+      <div class="page-header">
+        <div class="page-title">Menu</div>
+        <div class="page-sub">Semua fitur aplikasi</div>
+      </div>
+
+      <!-- Info user -->
+      <div style="margin:0 16px 16px;background:linear-gradient(135deg,var(--accent-dark),var(--accent));border-radius:var(--radius);padding:16px;color:#fff;display:flex;align-items:center;gap:12px">
+        <div style="width:44px;height:44px;border-radius:50%;background:rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:700;flex-shrink:0" id="lainnya-avatar">O</div>
+        <div>
+          <div style="font-size:15px;font-weight:700" id="lainnya-username">Owner</div>
+          <div style="font-size:11px;opacity:.8" id="lainnya-role">Administrator</div>
+        </div>
+      </div>
+
+      <!-- Menu utama -->
+      <div style="padding:0 16px;margin-bottom:8px">
+        <div style="font-size:10px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px">Operasional</div>
+
+        <div style="background:var(--surface);border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow)">
+          <button onclick="showPage('armada')" style="width:100%;display:flex;align-items:center;gap:14px;padding:14px 16px;border:none;background:none;cursor:pointer;border-bottom:1px solid var(--border);font-family:inherit">
+            <div style="width:38px;height:38px;border-radius:10px;background:var(--accent-light);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">🏍</div>
+            <div style="flex:1;text-align:left">
+              <div style="font-size:14px;font-weight:600;color:var(--text-primary)">Armada</div>
+              <div style="font-size:11px;color:var(--text-muted)">Kelola motor rental</div>
+            </div>
+            <span style="color:var(--text-muted);font-size:16px">›</span>
+          </button>
+
+          <button onclick="showPage('servis')" style="width:100%;display:flex;align-items:center;gap:14px;padding:14px 16px;border:none;background:none;cursor:pointer;border-bottom:1px solid var(--border);font-family:inherit">
+            <div style="width:38px;height:38px;border-radius:10px;background:var(--warning-light);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">🔧</div>
+            <div style="flex:1;text-align:left">
+              <div style="font-size:14px;font-weight:600;color:var(--text-primary)">Servis</div>
+              <div style="font-size:11px;color:var(--text-muted)">Riwayat perawatan armada</div>
+            </div>
+            <span style="color:var(--text-muted);font-size:16px">›</span>
+          </button>
+
+          <button onclick="showPage('perizinan')" style="width:100%;display:flex;align-items:center;gap:14px;padding:14px 16px;border:none;background:none;cursor:pointer;font-family:inherit">
+            <div style="width:38px;height:38px;border-radius:10px;background:var(--purple-light);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">📄</div>
+            <div style="flex:1;text-align:left">
+              <div style="font-size:14px;font-weight:600;color:var(--text-primary)">Perizinan</div>
+              <div style="font-size:11px;color:var(--text-muted)">Dokumen & izin usaha</div>
+            </div>
+            <span style="color:var(--text-muted);font-size:16px">›</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Keuangan -->
+      <div style="padding:0 16px;margin-bottom:8px">
+        <div style="font-size:10px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px">Keuangan</div>
+
+        <div style="background:var(--surface);border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow)">
+          <button onclick="showPage('keuangan')" style="width:100%;display:flex;align-items:center;gap:14px;padding:14px 16px;border:none;background:none;cursor:pointer;border-bottom:1px solid var(--border);font-family:inherit">
+            <div style="width:38px;height:38px;border-radius:10px;background:var(--success-light);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">💰</div>
+            <div style="flex:1;text-align:left">
+              <div style="font-size:14px;font-weight:600;color:var(--text-primary)">Keuangan</div>
+              <div style="font-size:11px;color:var(--text-muted)">Pemasukan & pengeluaran</div>
+            </div>
+            <span style="color:var(--text-muted);font-size:16px">›</span>
+          </button>
+
+          <button onclick="showPage('laporan')" style="width:100%;display:flex;align-items:center;gap:14px;padding:14px 16px;border:none;background:none;cursor:pointer;font-family:inherit">
+            <div style="width:38px;height:38px;border-radius:10px;background:var(--accent-light);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">📊</div>
+            <div style="flex:1;text-align:left">
+              <div style="font-size:14px;font-weight:600;color:var(--text-primary)">Laporan</div>
+              <div style="font-size:11px;color:var(--text-muted)">Analitik bisnis rental</div>
+            </div>
+            <span style="color:var(--text-muted);font-size:16px">›</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Sistem -->
+      <div style="padding:0 16px;margin-bottom:24px">
+        <div style="font-size:10px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px">Sistem</div>
+
+        <div style="background:var(--surface);border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow)">
+          <button onclick="showPage('pengaturan')" style="width:100%;display:flex;align-items:center;gap:14px;padding:14px 16px;border:none;background:none;cursor:pointer;border-bottom:1px solid var(--border);font-family:inherit">
+            <div style="width:38px;height:38px;border-radius:10px;background:var(--surface-2);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">⚙️</div>
+            <div style="flex:1;text-align:left">
+              <div style="font-size:14px;font-weight:600;color:var(--text-primary)">Pengaturan</div>
+              <div style="font-size:11px;color:var(--text-muted)">Konfigurasi aplikasi</div>
+            </div>
+            <span style="color:var(--text-muted);font-size:16px">›</span>
+          </button>
+
+          <button onclick="doLogout()" style="width:100%;display:flex;align-items:center;gap:14px;padding:14px 16px;border:none;background:none;cursor:pointer;font-family:inherit">
+            <div style="width:38px;height:38px;border-radius:10px;background:var(--danger-light);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">🚪</div>
+            <div style="flex:1;text-align:left">
+              <div style="font-size:14px;font-weight:600;color:var(--danger)">Keluar</div>
+              <div style="font-size:11px;color:var(--text-muted)">Logout dari aplikasi</div>
+            </div>
+            <span style="color:var(--text-muted);font-size:16px">›</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
     <div id="page-pengaturan" class="page">
       <div class="page-header">
         <div class="page-title">Pengaturan</div>
@@ -1274,13 +1409,13 @@
   <button class="bnav-item" onclick="showPage('sewa')" id="bnav-sewa">
     <span class="icon">📋</span>Sewa
   </button>
-  <button class="bnav-item" onclick="showPage('armada')" id="bnav-armada">
-    <span class="icon">🏍</span>Armada
-  </button>
   <button class="bnav-item" onclick="showPage('pelanggan')" id="bnav-pelanggan">
     <span class="icon">👤</span>Pelanggan
   </button>
-  <button class="bnav-item" onclick="showPage('pengaturan')" id="bnav-pengaturan">
+  <button class="bnav-item" onclick="showPage('laporan')" id="bnav-laporan">
+    <span class="icon">📊</span>Laporan
+  </button>
+  <button class="bnav-item" onclick="showPage('lainnya')" id="bnav-lainnya">
     <span class="icon">☰</span>Lainnya
   </button>
 </nav>
@@ -2042,7 +2177,24 @@ function showPage(page) {
   if (si) si.classList.add('active');
   const bi = document.getElementById('bnav-' + page);
   if (bi) bi.classList.add('active');
+  // Halaman yang diakses dari menu Lainnya — highlight bnav-lainnya
+  const lainnyaPages = ['armada','servis','perizinan','keuangan','pengaturan'];
+  if (lainnyaPages.includes(page)) {
+    const bl = document.getElementById('bnav-lainnya');
+    if (bl) bl.classList.add('active');
+  }
   currentPage = page;
+  // Sync info user di halaman lainnya
+  if (page === 'lainnya') {
+    const username = sessionStorage.getItem('dns_session_user') || 'Owner';
+    const role = sessionStorage.getItem('dns_session_role') || 'OWNER';
+    const av = document.getElementById('lainnya-avatar');
+    const un = document.getElementById('lainnya-username');
+    const rl = document.getElementById('lainnya-role');
+    if (av) av.textContent = username.charAt(0).toUpperCase();
+    if (un) un.textContent = username;
+    if (rl) rl.textContent = role;
+  }
   if (page === 'sewa') renderSewa();
   if (page === 'armada') renderMotor();
   if (page === 'pelanggan') renderPelanggan();

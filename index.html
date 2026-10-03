@@ -2958,16 +2958,16 @@ async function simpanPengembalian() {
   const statusBayar = document.getElementById('kemb-status-bayar').value;
   const metode      = document.getElementById('kemb-metode').value;
   const catatan     = document.getElementById('kemb-catatan').value.trim();
-  const sudahBayar  = Number(s.dp || 0);
-  const sisaSewa    = Number(s.total || 0) - sudahBayar;
-  const totalTagihan = sisaSewa + denda;
-  const sisaHutang  = totalTagihan - pelunasan;
+  // Pakai sisaTagihan dari summary backend (di-fetch saat bukaModalPengembalian)
+  const sisaSebelumDenda = Number(s.sisaTagihan || 0);
+  const totalTagihan     = sisaSebelumDenda + denda;
+  const sisaHutang       = totalTagihan - pelunasan;
 
   if (!tglAktual) { showToast('⚠️ Tanggal kembali wajib diisi'); return; }
   const konfirmMsg = `Konfirmasi pengembalian motor dari ${p?.nama}?
-Total tagihan: ${rupiah(totalTagihan)}
-Bayar sekarang: ${rupiah(pelunasan)}
-${sisaHutang > 0 ? `Sisa hutang: ${rupiah(sisaHutang)}` : 'Status: LUNAS'}`;
+Total harus bayar : ${rupiah(totalTagihan)}
+Bayar sekarang   : ${rupiah(pelunasan)}
+${sisaHutang > 0 ? `Sisa hutang      : ${rupiah(sisaHutang)}\nStatus           : HUTANG` : 'Status           : LUNAS'}`;
   if (!confirm(konfirmMsg)) return;
 
   try {

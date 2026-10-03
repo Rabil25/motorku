@@ -3292,8 +3292,8 @@ async function simpanServis() {
     if (status === 'PROSES') m.status = 'SERVIS';
     else if (m.status === 'SERVIS') m.status = 'TERSEDIA';
     if (km > 0) m.km = km;
-    // Catat ke keuangan lokal juga
-    if (biaya > 0) DB.keuangan.push({ id: genId('F',DB.keuangan), jenis:'PENGELUARAN', kategori:'Servis', tanggal:tgl, nominal:biaya, keterangan:`Servis ${m?.merek} ${m?.tipe} - ${jenis}` });
+    // Tidak push ke DB.keuangan lokal — backend sudah catat via addService
+    // Data keuangan akan sync dari backend saat reload berikutnya
     DB.aktivitas.unshift({ type: 'orange', teks: `Servis ${m?.merek} ${m?.tipe} (${m?.plat}) — ${jenis}`, waktu: 'Baru saja' });
     closeModal('modal-tambah-servis');
     showToast('✅ Servis berhasil dicatat');
@@ -3406,32 +3406,16 @@ async function bayarServis(servisId) {
 
   try {
     if (isOnline()) {
-      // Update status_pembayaran di sheet SERVIS via update_service
+      // update_service sudah otomatis catat ke KEUANGAN di backend
+      // JANGAN tambah add_finance manual — akan double entry
       await apiPost('update_service', {
         ID: servisId,
         STATUS_PEMBAYARAN: 'Sudah Dibayar',
-      });
-      // Catat ke keuangan
-      await apiPost('add_finance', {
-        JENIS: 'PENGELUARAN',
-        KATEGORI: 'Servis',
-        TANGGAL: todayLocal(),
-        NOMINAL: s.biaya,
         METODE_PEMBAYARAN: metodeBayar,
-        KETERANGAN: `Bayar servis ${m?.merek||''} ${m?.tipe||''} (${m?.plat||''}) — ${s.jenisServis}`,
-        REF_ID: servisId,
       });
     }
-    // Update lokal
+    // Update lokal saja (tidak push ke DB.keuangan — akan sync saat reload)
     s.statusBayar = 'Sudah Dibayar';
-    // Tambah ke keuangan lokal
-    DB.keuangan.push({
-      id: 'F-' + Date.now(),
-      jenis: 'PENGELUARAN', kategori: 'Servis',
-      tanggal: todayLocal(),
-      nominal: s.biaya, metode: metodeBayar,
-      keterangan: `Bayar servis ${m?.plat||''} — ${s.jenisServis}`,
-    });
     DB.aktivitas.unshift({ type: 'orange', teks: `Servis ${m?.plat||''} (${s.jenisServis}) sudah dibayar — ${rupiah(s.biaya)}`, waktu: 'Baru saja' });
     showToast(`✅ Servis ${rupiah(s.biaya)} ditandai sudah dibayar`);
     renderServis();
